@@ -61,12 +61,12 @@
                 Console.ForegroundColor = prevfg;
                 Console.BackgroundColor = prevbg;
 
-#if DEBUG
-                try
-                {
-                    Console.ReadKey();
-                }catch { }
-#endif
+//#if DEBUG
+//                try
+//                {
+//                    Console.ReadKey();
+//                }catch { }
+//#endif
             }
         }
     }
