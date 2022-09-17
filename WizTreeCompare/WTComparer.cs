@@ -1,4 +1,5 @@
 ﻿using CsvHelper;
+using CsvHelper.TypeConversion;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -61,9 +62,8 @@ namespace WizTreeCompare
             Dictionary<string, WTCsvRow> pastrows = new Dictionary<string, WTCsvRow>();
             using (var sr = new StreamReader(PastPath, Encoding.UTF8))
             {
-                string line = sr.ReadLine();
-                if (line != null && line[0] != 'G')
-                    sr.BaseStream.Seek(0, SeekOrigin.Begin);
+                if (sr.Peek() == 'G')
+                    sr.ReadLine();
 
                 using (var csv = new CsvReader(sr, System.Globalization.CultureInfo.InvariantCulture))
                 {
@@ -80,9 +80,8 @@ namespace WizTreeCompare
             LogToConsole("Reading future CSV and populating output differential file...");
             using (var sr = new StreamReader(FuturePath, Encoding.UTF8))
             {
-                string line = sr.ReadLine();
-                if (line != null && line[0] != 'G')
-                    sr.BaseStream.Seek(0, SeekOrigin.Begin);
+                if (sr.Peek() == 'G')
+                    sr.ReadLine();
 
                 using (var csv = new CsvReader(sr, System.Globalization.CultureInfo.InvariantCulture))
                 using (var writer = new StreamWriter(outputpath, false, Encoding.UTF8))
@@ -91,6 +90,10 @@ namespace WizTreeCompare
                     ShouldQuote = (e) => e.FieldType == typeof(string)
                 }))
                 {
+                    var options = new TypeConverterOptions { Formats = new[] { "yyyy-MM-dd HH:mm:ss" } };
+                    csvoutput.Context.TypeConverterOptionsCache.AddOptions<DateTime>(options);
+                    csvoutput.Context.TypeConverterOptionsCache.AddOptions<DateTime?>(options);
+
                     csvoutput.WriteHeader<WTCsvRow>();
                     foreach (WTCsvRow futurerow in csv.GetRecords<WTCsvRow>())
                     {

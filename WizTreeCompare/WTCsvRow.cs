@@ -15,7 +15,7 @@ namespace WizTreeCompare
         public long Size { get; set; }
         public long Allocated { get; set; }
 
-        [Format("yyyy-MM-dd HH:mm:ss")]
+        //[Format("yyyy-MM-dd HH:mm:ss")] //Lol, this changes based on your system settings... why I have no idea
         public DateTime? Modified { get; set; }
 
         public long? Attributes { get; set; }
