@@ -2,7 +2,10 @@
 using CsvHelper.TypeConversion;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
+using System.Drawing;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -10,10 +13,9 @@ namespace WizTreeCompare
 {
     public class WTComparer
     {
-        enum LogType { Info, Warning, Error }
-
         string PastPath, FuturePath;
-        bool IsConsole;
+        public bool IsConsole, IncludeNegatives = false, Dry = false, ForceYes = false, IncludeUnchanged = false, ProbeMode = false;
+        public CancellationToken CancellationToken;
         public WTComparer(string pastpath, string futurepath, bool console = false)
         {
             this.PastPath = pastpath;
@@ -24,7 +26,7 @@ namespace WizTreeCompare
         ConsoleColor prevfg;
         ConsoleColor prevbg;
 
-        public void CompareAndSave(string outputpath)
+        public void CompareAndSave(string outputpath) //TODO: Check full differential, add option to include zeroes
         {
             prevfg = Console.ForegroundColor;
             prevbg = Console.BackgroundColor;
@@ -41,12 +43,16 @@ namespace WizTreeCompare
                 return;
             }
 
-            if (File.Exists(outputpath))
+            if (File.Exists(outputpath) && !Dry)
             {
                 if (!IsConsole)
                 {
-                    if (MessageBox.Show($"A file already exists at '{outputpath}'. Would you like you overwrite it?", "Warning", MessageBoxButtons.YesNo, MessageBoxIcon.Warning) != DialogResult.Yes)
-                        return;
+                    //if (MessageBox.Show($"A file already exists at '{outputpath}'. Would you like you overwrite it?", "Warning", MessageBoxButtons.YesNo, MessageBoxIcon.Warning) != DialogResult.Yes)
+                    //    return;
+                }
+                else if (ForceYes)
+                {
+                    Log($"Force yes is on... the output file '{outputpath}' exists but will be overwritten", LogType.Warning);
                 }
                 else
                 {
@@ -58,10 +64,31 @@ namespace WizTreeCompare
                 }
             }
 
+            /* Set up progress logger */
+            int nrow = 0;
+            TimeSpan tickrate = TimeSpan.FromMilliseconds(300);
+            var action = (ProgressContext ctx) => { };
+            if (!ProbeMode)
+                action = (ProgressContext ctx) =>
+                {
+                    if (ctx.ProgressCurrent >= 0 && ctx.ProgressTotal > 0)
+                        ctx.AnnounceProgress($"Accessing row {nrow}, {(ctx.ProgressCurrent / ctx.ProgressTotal) * 100:0.00}% complete, running for {(DateTime.Now - ctx.StartTime):m'm 's's 'fff'ms'}");
+                    else
+                        ctx.AnnounceProgress($"Accessing row {nrow}, running for {(DateTime.Now - ctx.StartTime):m'm 's's 'fff'ms'}");
+                };
+
+
+            /* PAST CSV */
             LogToConsole("Reading past CSV and populating dictionary...");
             Dictionary<string, WTCsvRow> pastrows = new Dictionary<string, WTCsvRow>();
+            if (CancellationToken.IsCancellationRequested) return; // <X>
+            using (var progress = new ProgressContext(tickrate, action))
             using (var sr = new StreamReader(PastPath, Encoding.UTF8))
             {
+                progress.StartTime = DateTime.Now;
+                progress.ProgressTotal = sr.BaseStream.CanSeek ? sr.BaseStream.Length : -1;
+                progress.Action(progress);
+
                 if (sr.Peek() == 'G')
                     sr.ReadLine();
 
@@ -69,6 +96,14 @@ namespace WizTreeCompare
                 {
                     foreach (WTCsvRow row in csv.GetRecords<WTCsvRow>())
                     {
+                        if (CancellationToken.IsCancellationRequested) return; // <X>
+
+                        /* Progress */
+                        nrow = csv.Context.Parser.Row;
+                        progress.ProgressCurrent = progress.ProgressTotal > 0 ? sr.BaseStream.Position : -1;
+                        progress.InvokeLater();
+
+                        /* Work */
                         if (row.FileName.EndsWith('\\') || row.FileName.EndsWith('/'))
                             continue; // It's a folder, we don't care about folders
 
@@ -76,71 +111,282 @@ namespace WizTreeCompare
                     }
                 }
             }
+            LogToConsole($"Past dictionary populated with {pastrows.Count} entries", LogType.InfoImportant);
 
+            /* FUTURE CSV subtract PAST CSV */
             LogToConsole("Reading future CSV and populating output differential file...");
-            using (var sr = new StreamReader(FuturePath, Encoding.UTF8))
+            int additions = 0, modifications = 0, deletions = 0, nochange = 0;
+            long addbyte = 0, subbyte = 0, diffbyte = 0;
+            using (var writer = Dry ? StreamWriter.Null : new StreamWriter(outputpath, false, Encoding.UTF8))
+            using (var csvoutput = new CsvWriter(writer, new CsvHelper.Configuration.CsvConfiguration(System.Globalization.CultureInfo.InvariantCulture)
             {
-                if (sr.Peek() == 'G')
-                    sr.ReadLine();
+                ShouldQuote = (e) => e.FieldType == typeof(string)
+            }))
+            {
+                HashSet<string> seen = new HashSet<string>(pastrows.Count);
 
-                using (var csv = new CsvReader(sr, System.Globalization.CultureInfo.InvariantCulture))
-                using (var writer = new StreamWriter(outputpath, false, Encoding.UTF8))
-                using (var csvoutput = new CsvWriter(writer, new CsvHelper.Configuration.CsvConfiguration(System.Globalization.CultureInfo.InvariantCulture)
+                using (var progress = new ProgressContext(tickrate, action))
+                using (var sr = new StreamReader(FuturePath, Encoding.UTF8))
                 {
-                    ShouldQuote = (e) => e.FieldType == typeof(string)
-                }))
-                {
-                    var options = new TypeConverterOptions { Formats = new[] { "yyyy-MM-dd HH:mm:ss" } };
-                    csvoutput.Context.TypeConverterOptionsCache.AddOptions<DateTime>(options);
-                    csvoutput.Context.TypeConverterOptionsCache.AddOptions<DateTime?>(options);
+                    /* Progress */
+                    progress.StartTime = DateTime.Now;
+                    progress.ProgressTotal = sr.BaseStream.CanSeek ? sr.BaseStream.Length : -1;
+                    progress.Action(progress);
 
-                    csvoutput.WriteHeader<WTCsvRow>();
-                    foreach (WTCsvRow futurerow in csv.GetRecords<WTCsvRow>())
+                    /* Work */
+                    if (sr.Peek() == 'G')
+                        sr.ReadLine();
+
+                    using (var csv = new CsvReader(sr, System.Globalization.CultureInfo.InvariantCulture))
                     {
-                        if (futurerow.FileName.EndsWith('\\') || futurerow.FileName.EndsWith('/'))
-                            continue; // It's a folder, we don't care about folders
+                        var options = new TypeConverterOptions { Formats = new[] { "yyyy-MM-dd HH:mm:ss" } };
+                        csvoutput.Context.TypeConverterOptionsCache.AddOptions<DateTime>(options);
+                        csvoutput.Context.TypeConverterOptionsCache.AddOptions<DateTime?>(options);
 
-                        if (!pastrows.ContainsKey(futurerow.FileName))
+                        csvoutput.WriteHeader<WTCsvRow>();
+                        foreach (WTCsvRow futurerow in csv.GetRecords<WTCsvRow>())
                         {
-                            csvoutput.NextRecord();
-                            csvoutput.WriteRecord(futurerow);
-                        }
-                        else
+                            if (CancellationToken.IsCancellationRequested) return; // <X>
+
+                            /* Progress */
+                            nrow = csv.Context.Parser.Row;
+                            progress.ProgressCurrent = progress.ProgressTotal > 0 ? sr.BaseStream.Position : -1;
+                            progress.InvokeLater();
+
+                            /* Work */
+                            if (futurerow.FileName.EndsWith('\\') || futurerow.FileName.EndsWith('/'))
+                                continue; // It's a folder, we don't care about folders
+
+                            if (!pastrows.ContainsKey(futurerow.FileName))
+                            {
+                                //It's a new file, add it as-is
+                                csvoutput.NextRecord();
+                                csvoutput.WriteRecord(futurerow);
+                                additions++;
+                                addbyte += futurerow.Size;
+                            }
+                            else
+                            {
+                                seen.Add(futurerow.FileName);
+
+                                //Same file, calc difference
+                                WTCsvRow pastrow = pastrows[futurerow.FileName];
+
+                                long size = futurerow.Size - pastrow.Size;
+                                if (!IncludeNegatives && size < 0) continue; //Negative size change
+                                if (!IncludeUnchanged && size == 0) continue;
+
+                                long allocated = futurerow.Allocated - pastrow.Allocated;
+                                if (!IncludeNegatives && allocated < 0) allocated = 0; //Allocated chunks can be removed despite file being logically larger -- What a weird bug
+
+                                WTCsvRow newrow = new WTCsvRow();
+                                newrow.FileName = futurerow.FileName;
+                                newrow.Size = size;
+                                newrow.Allocated = allocated;
+                                newrow.Modified = futurerow.Modified;
+                                newrow.Attributes = futurerow.Attributes;
+
+                                csvoutput.NextRecord();
+                                csvoutput.WriteRecord(newrow);
+
+                                if(newrow.Size == 0)
+                                    nochange++;
+                                else
+                                    modifications++;
+
+                                if (newrow.Size > 0)
+                                    addbyte += newrow.Size;
+                                else
+                                    subbyte += -newrow.Size;
+                            }
+                        }/*end foreach*/
+                    }/*end using CsvReader*/
+                }/*end using StreamReader*/
+                //LogToConsole($"Populated output csv with {additions} additions and {modifications} differences", LogType.InfoImportant);
+
+                /* Full */
+                if (IncludeNegatives)
+                {
+                    LogToConsole("Finding and populating deletions...");
+
+                    using (var progress = new ProgressContext(tickrate, action))
+                    {
+                        /* Progress */
+                        nrow = 0;
+                        progress.StartTime = DateTime.Now;
+                        progress.ProgressTotal = pastrows.Count;
+                        progress.Action(progress);
+
+                        /* Work */
+                        foreach (var kv in pastrows)
                         {
-                            WTCsvRow pastrow = pastrows[futurerow.FileName];
+                            if (CancellationToken.IsCancellationRequested) return; // <X>
 
-                            long size = futurerow.Size - pastrow.Size;
-                            if (size < 1) continue;
+                            progress.ProgressCurrent = ++nrow;
+                            progress.InvokeLater();
 
-                            long allocated = futurerow.Allocated - pastrow.Allocated;
-                            if (allocated < 0) allocated = 0; //Allocated chunks can be removed despite file being logically larger -- What a weird bug
+                            if (seen.Contains(kv.Key)) continue;
 
                             WTCsvRow newrow = new WTCsvRow();
-                            newrow.FileName = futurerow.FileName;
-                            newrow.Size = size;
-                            newrow.Allocated = allocated;
-                            newrow.Modified = futurerow.Modified;
-                            newrow.Attributes = futurerow.Attributes;
+                            newrow.FileName = kv.Value.FileName;
+                            newrow.Size = -kv.Value.Size;
+                            newrow.Allocated = 0;
+                            newrow.Modified = kv.Value.Modified;
+                            newrow.Attributes = kv.Value.Attributes;
 
                             csvoutput.NextRecord();
                             csvoutput.WriteRecord(newrow);
+                            deletions++;
+                            subbyte += kv.Value.Size;
                         }
                     }
+
+                    //LogToConsole($"Populated output csv with {deletions} deletions", LogType.InfoImportant);
                 }
+            }/*end using CsvWriter*/
+
+            long bytediff = addbyte - subbyte;
+            if (!IncludeNegatives) subbyte = deletions = -1;
+            if (ProbeMode)
+            {
+                LogToConsole($"Files - {additions} additions - {deletions:0;'N/A';0} deletions - {modifications} modifications", LogType.InfoImportant);
+                LogToConsole($"Bytes - {addbyte} added - {subbyte:0;'N/A';0} subtracted - {bytediff:+0;-0;0} differential", LogType.InfoImportant);
+            }
+            else
+            {
+                LogToConsole($"Files - {additions:#,0} additions - {deletions:#,0;'N/A';0} deletions - {modifications:#,0} modifications", LogType.InfoImportant);
+                LogToConsole($"Bytes - {BytesToString(addbyte)} added - {(subbyte < 0 ? "N/A" : BytesToString(subbyte))} subtracted - {bytediff:+;-;}{BytesToString(bytediff)} differential", LogType.InfoImportant);
             }
 
-            Log($"Differential complete at '{outputpath}'");
+            if (!Dry)
+                Log($"Differential complete at '{outputpath}'", LogType.Success);
+            else
+                Log($"Dry run complete", LogType.Success);
+            Console.WriteLine();
         }
 
+        /* ==========================
+         *          Helpers
+         * ==========================
+         */
+        static string BytesToString(long byteCount)
+        {
+            //https://stackoverflow.com/a/4975942
+            string[] suf = { " B", " KiB", " MiB", " GiB", " TiB", " PiB", " EiB" }; //Longs run out around EB
+            if (byteCount == 0)
+                return "0" + suf[0];
+            long bytes = Math.Abs(byteCount);
+            int place = Convert.ToInt32(Math.Floor(Math.Log(bytes, 1024)));
+            double num = Math.Round(bytes / Math.Pow(1024, place), 1);
+            return (Math.Sign(byteCount) * num).ToString("0.###") + suf[place];
+        }
+
+        protected class LaterContext<TSelf>
+        {
+            public TimeSpan Delay;
+            public Action<TSelf> Action;
+            public Task Task = Task.CompletedTask;
+            public Dictionary<string, object> Memory = new Dictionary<string, object>(8);
+
+            public CancellationTokenSource TokenSource = new CancellationTokenSource();
+
+            public LaterContext(TimeSpan tickrate, Action<TSelf> action)
+            {
+                Delay = tickrate;
+                Action = action;
+            }
+
+            public Task InvokeLater()
+            {
+
+                if (!this.Task.IsCompleted) return this.Task;
+
+                this.Task = Task.Run(async () =>
+                {
+                    await Task.Delay(this.Delay, TokenSource.Token);
+
+                    if (!TokenSource.Token.IsCancellationRequested)
+                        this.Action.DynamicInvoke(this);
+                });
+
+                return this.Task;
+            }
+        }
+
+        protected class ProgressContext : LaterContext<ProgressContext>, IDisposable
+        {
+            public int CursorX = -1, CursorY = -1;
+
+            public float ProgressCurrent = -1, ProgressTotal = -1;
+
+            public DateTime StartTime = DateTime.Now;
+
+            public ProgressContext(TimeSpan tickrate, Action<ProgressContext> action) : base(tickrate, action) { }
+
+            public void AnnounceProgress(string msg)
+            {
+                /* Console */
+                if (this.CursorX < 0 || this.CursorY < 0)
+                {
+                    this.CursorX = Console.CursorLeft;
+                    this.CursorY = Console.CursorTop;
+                    Console.WriteLine();
+                }
+
+                int prevcursorX = Console.CursorLeft;
+                int prevcursorY = Console.CursorTop;
+                Console.CursorLeft = this.CursorX;
+                Console.CursorTop = this.CursorY;
+
+                ConsoleColor prevfg = Console.ForegroundColor;
+                Console.ForegroundColor = ConsoleColor.DarkGreen;
+                Console.Write($" % ");
+                Console.ForegroundColor = ProgressCurrent >= ProgressTotal ? ConsoleColor.Green : (prevfg == ConsoleColor.Gray ? ConsoleColor.DarkGray : (ConsoleColor)((byte)prevfg ^ 0x08));
+                Console.Write($" ");
+                Console.WriteLine(msg);
+                Console.ForegroundColor = prevfg;
+
+                Console.CursorLeft = prevcursorX;
+                Console.CursorTop = prevcursorY;
+            }
+
+            public void Dispose()
+            {
+                TokenSource.Cancel();
+                this.Action(this);
+
+                this.ProgressCurrent = 0;
+                this.CursorX = -1;
+                this.CursorY = -1;
+            }
+        }
+
+        enum LogType { Success = 0, Info = 1, InfoImportant = 1 | 0x08, Warning = 2 | 0x08, Error = 3 | 0x08 }
         void LogToConsole(string msg, LogType type = LogType.Info, bool writeline = true)
         {
+            if (ProbeMode)
+            {
+                if (((int)type & 0x08) == 0x08) Console.WriteLine(msg);
+                return;
+            }
+
             switch (type)
             {
                 default:
-                case LogType.Info:
+                case LogType.InfoImportant:
                     Console.ForegroundColor = ConsoleColor.Black;
                     Console.BackgroundColor = ConsoleColor.Cyan;
                     Console.Write($" i ");
+                    break;
+                case LogType.Info:
+                    Console.ForegroundColor = ConsoleColor.Cyan;
+                    Console.BackgroundColor = ConsoleColor.Black;
+                    Console.Write($" i ");
+                    break;
+                case LogType.Success:
+                    Console.ForegroundColor = ConsoleColor.Green;
+                    Console.BackgroundColor = ConsoleColor.Black;
+                    Console.Write($" ~ ");
                     break;
                 case LogType.Warning:
                     Console.ForegroundColor = ConsoleColor.Black;
@@ -163,16 +409,15 @@ namespace WizTreeCompare
 
         void Log(string msg, LogType type = LogType.Info, bool writeline = true)
         {
-            if (IsConsole)
-            {
-                LogToConsole(msg, type, writeline);
-            }
-            else
+            LogToConsole(msg, type, writeline);
+
+            if (!IsConsole)
             {
                 switch (type)
                 {
                     default:
                     case LogType.Info:
+                    case LogType.Success:
                         MessageBox.Show(msg, "Info", MessageBoxButtons.OK, MessageBoxIcon.Information);
                         break;
                     case LogType.Warning:
@@ -183,6 +428,6 @@ namespace WizTreeCompare
                         break;
                 }
             }
-        }
+        }/*end Log()*/
     }
 }

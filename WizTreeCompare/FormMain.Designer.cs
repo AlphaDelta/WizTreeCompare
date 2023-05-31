@@ -28,123 +28,169 @@
         /// </summary>
         private void InitializeComponent()
         {
-            this.gbFiles = new System.Windows.Forms.GroupBox();
-            this.btnFuture = new System.Windows.Forms.Button();
-            this.btnPast = new System.Windows.Forms.Button();
-            this.txtFuture = new System.Windows.Forms.TextBox();
-            this.lblPast = new System.Windows.Forms.Label();
-            this.txtPast = new System.Windows.Forms.TextBox();
-            this.lblFuture = new System.Windows.Forms.Label();
-            this.btnCompare = new System.Windows.Forms.Button();
-            this.gbFiles.SuspendLayout();
-            this.SuspendLayout();
+            gbFiles = new GroupBox();
+            btnFuture = new Button();
+            btnPast = new Button();
+            txtFuture = new TextBox();
+            lblPast = new Label();
+            txtPast = new TextBox();
+            lblFuture = new Label();
+            btnCompare = new Button();
+            gbOptions = new GroupBox();
+            chkDry = new CheckBox();
+            chkIncludeUnchanged = new CheckBox();
+            chkIncludeNegatives = new CheckBox();
+            gbFiles.SuspendLayout();
+            gbOptions.SuspendLayout();
+            SuspendLayout();
             // 
             // gbFiles
             // 
-            this.gbFiles.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
-            | System.Windows.Forms.AnchorStyles.Right)));
-            this.gbFiles.Controls.Add(this.btnFuture);
-            this.gbFiles.Controls.Add(this.btnPast);
-            this.gbFiles.Controls.Add(this.txtFuture);
-            this.gbFiles.Controls.Add(this.lblPast);
-            this.gbFiles.Controls.Add(this.txtPast);
-            this.gbFiles.Controls.Add(this.lblFuture);
-            this.gbFiles.Location = new System.Drawing.Point(12, 12);
-            this.gbFiles.Name = "gbFiles";
-            this.gbFiles.Size = new System.Drawing.Size(460, 84);
-            this.gbFiles.TabIndex = 0;
-            this.gbFiles.TabStop = false;
-            this.gbFiles.Text = "Files";
+            gbFiles.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
+            gbFiles.Controls.Add(btnFuture);
+            gbFiles.Controls.Add(btnPast);
+            gbFiles.Controls.Add(txtFuture);
+            gbFiles.Controls.Add(lblPast);
+            gbFiles.Controls.Add(txtPast);
+            gbFiles.Controls.Add(lblFuture);
+            gbFiles.Location = new Point(12, 12);
+            gbFiles.Name = "gbFiles";
+            gbFiles.Size = new Size(460, 84);
+            gbFiles.TabIndex = 0;
+            gbFiles.TabStop = false;
+            gbFiles.Text = "Files";
             // 
             // btnFuture
             // 
-            this.btnFuture.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-            this.btnFuture.Location = new System.Drawing.Point(425, 50);
-            this.btnFuture.Name = "btnFuture";
-            this.btnFuture.Size = new System.Drawing.Size(29, 23);
-            this.btnFuture.TabIndex = 3;
-            this.btnFuture.Text = "...";
-            this.btnFuture.UseVisualStyleBackColor = true;
-            this.btnFuture.Click += new System.EventHandler(this.btnFuture_Click);
+            btnFuture.Anchor = AnchorStyles.Top | AnchorStyles.Right;
+            btnFuture.Location = new Point(425, 50);
+            btnFuture.Name = "btnFuture";
+            btnFuture.Size = new Size(29, 23);
+            btnFuture.TabIndex = 3;
+            btnFuture.Text = "...";
+            btnFuture.UseVisualStyleBackColor = true;
+            btnFuture.Click += btnFuture_Click;
             // 
             // btnPast
             // 
-            this.btnPast.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-            this.btnPast.Location = new System.Drawing.Point(425, 21);
-            this.btnPast.Name = "btnPast";
-            this.btnPast.Size = new System.Drawing.Size(29, 24);
-            this.btnPast.TabIndex = 1;
-            this.btnPast.Text = "...";
-            this.btnPast.UseVisualStyleBackColor = true;
-            this.btnPast.Click += new System.EventHandler(this.btnPast_Click);
+            btnPast.Anchor = AnchorStyles.Top | AnchorStyles.Right;
+            btnPast.Location = new Point(425, 21);
+            btnPast.Name = "btnPast";
+            btnPast.Size = new Size(29, 24);
+            btnPast.TabIndex = 1;
+            btnPast.Text = "...";
+            btnPast.UseVisualStyleBackColor = true;
+            btnPast.Click += btnPast_Click;
             // 
             // txtFuture
             // 
-            this.txtFuture.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
-            | System.Windows.Forms.AnchorStyles.Right)));
-            this.txtFuture.BackColor = System.Drawing.SystemColors.Control;
-            this.txtFuture.Location = new System.Drawing.Point(80, 51);
-            this.txtFuture.Name = "txtFuture";
-            this.txtFuture.Size = new System.Drawing.Size(339, 23);
-            this.txtFuture.TabIndex = 2;
+            txtFuture.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
+            txtFuture.BackColor = SystemColors.Control;
+            txtFuture.Location = new Point(80, 51);
+            txtFuture.Name = "txtFuture";
+            txtFuture.Size = new Size(339, 23);
+            txtFuture.TabIndex = 2;
             // 
             // lblPast
             // 
-            this.lblPast.AutoSize = true;
-            this.lblPast.Location = new System.Drawing.Point(18, 25);
-            this.lblPast.Name = "lblPast";
-            this.lblPast.Size = new System.Drawing.Size(56, 15);
-            this.lblPast.TabIndex = 0;
-            this.lblPast.Text = "Past CSV:";
+            lblPast.AutoSize = true;
+            lblPast.Location = new Point(18, 25);
+            lblPast.Name = "lblPast";
+            lblPast.Size = new Size(56, 15);
+            lblPast.TabIndex = 0;
+            lblPast.Text = "Past CSV:";
             // 
             // txtPast
             // 
-            this.txtPast.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
-            | System.Windows.Forms.AnchorStyles.Right)));
-            this.txtPast.BackColor = System.Drawing.SystemColors.Control;
-            this.txtPast.Location = new System.Drawing.Point(80, 22);
-            this.txtPast.Name = "txtPast";
-            this.txtPast.Size = new System.Drawing.Size(339, 23);
-            this.txtPast.TabIndex = 0;
+            txtPast.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
+            txtPast.BackColor = SystemColors.Control;
+            txtPast.Location = new Point(80, 22);
+            txtPast.Name = "txtPast";
+            txtPast.Size = new Size(339, 23);
+            txtPast.TabIndex = 0;
             // 
             // lblFuture
             // 
-            this.lblFuture.AutoSize = true;
-            this.lblFuture.Location = new System.Drawing.Point(6, 54);
-            this.lblFuture.Name = "lblFuture";
-            this.lblFuture.Size = new System.Drawing.Size(68, 15);
-            this.lblFuture.TabIndex = 0;
-            this.lblFuture.Text = "Future CSV:";
+            lblFuture.AutoSize = true;
+            lblFuture.Location = new Point(6, 54);
+            lblFuture.Name = "lblFuture";
+            lblFuture.Size = new Size(68, 15);
+            lblFuture.TabIndex = 0;
+            lblFuture.Text = "Future CSV:";
             // 
             // btnCompare
             // 
-            this.btnCompare.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
-            | System.Windows.Forms.AnchorStyles.Left) 
-            | System.Windows.Forms.AnchorStyles.Right)));
-            this.btnCompare.Location = new System.Drawing.Point(12, 102);
-            this.btnCompare.Name = "btnCompare";
-            this.btnCompare.Size = new System.Drawing.Size(460, 43);
-            this.btnCompare.TabIndex = 4;
-            this.btnCompare.Text = "Compare...";
-            this.btnCompare.UseVisualStyleBackColor = true;
-            this.btnCompare.Click += new System.EventHandler(this.btnCompare_Click);
+            btnCompare.Anchor = AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
+            btnCompare.Location = new Point(12, 208);
+            btnCompare.Name = "btnCompare";
+            btnCompare.Size = new Size(460, 43);
+            btnCompare.TabIndex = 4;
+            btnCompare.Text = "Compare...";
+            btnCompare.UseVisualStyleBackColor = true;
+            btnCompare.Click += btnCompare_Click;
+            // 
+            // gbOptions
+            // 
+            gbOptions.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
+            gbOptions.Controls.Add(chkDry);
+            gbOptions.Controls.Add(chkIncludeUnchanged);
+            gbOptions.Controls.Add(chkIncludeNegatives);
+            gbOptions.Location = new Point(12, 102);
+            gbOptions.Name = "gbOptions";
+            gbOptions.Size = new Size(460, 100);
+            gbOptions.TabIndex = 5;
+            gbOptions.TabStop = false;
+            gbOptions.Text = "Options";
+            // 
+            // chkDry
+            // 
+            chkDry.AutoSize = true;
+            chkDry.Location = new Point(17, 72);
+            chkDry.Name = "chkDry";
+            chkDry.Size = new Size(286, 19);
+            chkDry.TabIndex = 0;
+            chkDry.Text = "Dry run (provide information only, no file output)";
+            chkDry.UseVisualStyleBackColor = true;
+            // 
+            // chkIncludeUnchanged
+            // 
+            chkIncludeUnchanged.AutoSize = true;
+            chkIncludeUnchanged.Location = new Point(17, 47);
+            chkIncludeUnchanged.Name = "chkIncludeUnchanged";
+            chkIncludeUnchanged.Size = new Size(319, 19);
+            chkIncludeUnchanged.TabIndex = 0;
+            chkIncludeUnchanged.Text = "Include unchanged (includes files with no size changes)";
+            chkIncludeUnchanged.UseVisualStyleBackColor = true;
+            // 
+            // chkIncludeNegatives
+            // 
+            chkIncludeNegatives.AutoSize = true;
+            chkIncludeNegatives.ForeColor = Color.Red;
+            chkIncludeNegatives.Location = new Point(17, 22);
+            chkIncludeNegatives.Name = "chkIncludeNegatives";
+            chkIncludeNegatives.Size = new Size(343, 19);
+            chkIncludeNegatives.TabIndex = 0;
+            chkIncludeNegatives.Text = "Include negatives (includes deleted files and size reductions)";
+            chkIncludeNegatives.UseVisualStyleBackColor = true;
             // 
             // FormMain
             // 
-            this.AutoScaleDimensions = new System.Drawing.SizeF(7F, 15F);
-            this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.BackColor = System.Drawing.SystemColors.Window;
-            this.ClientSize = new System.Drawing.Size(484, 157);
-            this.Controls.Add(this.btnCompare);
-            this.Controls.Add(this.gbFiles);
-            this.MaximumSize = new System.Drawing.Size(1200, 196);
-            this.MinimumSize = new System.Drawing.Size(300, 196);
-            this.Name = "FormMain";
-            this.Text = "WizTree Compare";
-            this.gbFiles.ResumeLayout(false);
-            this.gbFiles.PerformLayout();
-            this.ResumeLayout(false);
-
+            AutoScaleDimensions = new SizeF(7F, 15F);
+            AutoScaleMode = AutoScaleMode.Font;
+            BackColor = SystemColors.Window;
+            ClientSize = new Size(484, 263);
+            Controls.Add(gbOptions);
+            Controls.Add(btnCompare);
+            Controls.Add(gbFiles);
+            MaximumSize = new Size(1200, 420);
+            MinimumSize = new Size(300, 196);
+            Name = "FormMain";
+            Text = "WizTree Compare";
+            gbFiles.ResumeLayout(false);
+            gbFiles.PerformLayout();
+            gbOptions.ResumeLayout(false);
+            gbOptions.PerformLayout();
+            ResumeLayout(false);
         }
 
         #endregion
@@ -157,5 +203,9 @@
         private Button btnFuture;
         private Button btnPast;
         private Button btnCompare;
+        private GroupBox gbOptions;
+        private CheckBox chkIncludeNegatives;
+        private CheckBox chkDry;
+        private CheckBox chkIncludeUnchanged;
     }
 }
