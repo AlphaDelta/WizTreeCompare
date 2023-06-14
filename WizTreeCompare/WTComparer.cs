@@ -14,7 +14,16 @@ namespace WizTreeCompare
     public class WTComparer
     {
         string PastPath, FuturePath;
-        public bool IsConsole, IncludeNegatives = false, Dry = false, ForceYes = false, IncludeUnchanged = false, ProbeMode = false;
+
+        public bool IsConsole,
+            IncludeNegatives = false,
+            Dry = false,
+            ForceYes = false,
+            IncludeUnchanged = false,
+            ProbeMode = false,
+            IncludeDirectories = false
+        ;
+
         public CancellationToken CancellationToken;
         public WTComparer(string pastpath, string futurepath, bool console = false)
         {
@@ -189,7 +198,7 @@ namespace WizTreeCompare
                                 csvoutput.NextRecord();
                                 csvoutput.WriteRecord(newrow);
 
-                                if(newrow.Size == 0)
+                                if (newrow.Size == 0)
                                     nochange++;
                                 else
                                     modifications++;

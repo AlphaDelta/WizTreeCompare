@@ -49,6 +49,7 @@
                     Dry = args[0].Contains('d'),
                     ForceYes = args[0].Contains('Y'),
                     ProbeMode = args[0].Contains('p'),
+                    IncludeDirectories = args[0].Contains('D'),
                 };
                 comparer.CompareAndSave(args[3]);
             }
@@ -68,10 +69,11 @@
                 Console.ForegroundColor = prevfg;
                 Console.BackgroundColor = prevbg;
                 Console.WriteLine("d - Dry run");
+                Console.WriteLine("p - Probe (reduced verbosity for easier post-processing, consider using 'Y' as well)");
                 Console.WriteLine("f - Full differential (implies 'n' and 'u')");
                 Console.WriteLine("n - Include negative differences (deleted files and reduced/trunacted file sizes)");
                 Console.WriteLine("u - Include zero differences (unchanged file sizes)");
-                Console.WriteLine("p - Probe (reduced verbosity for easier post-processing, consider using 'Y' as well)");
+                Console.WriteLine("D - Include directories (without this option directory entries are skipped by default)");
                 Console.WriteLine("Y - Force yes on all questions");
                 Console.WriteLine();
 
