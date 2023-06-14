@@ -38,6 +38,7 @@
             btnCompare = new Button();
             gbOptions = new GroupBox();
             chkDry = new CheckBox();
+            chkIncludeDirs = new CheckBox();
             chkIncludeUnchanged = new CheckBox();
             chkIncludeNegatives = new CheckBox();
             gbFiles.SuspendLayout();
@@ -121,7 +122,7 @@
             // btnCompare
             // 
             btnCompare.Anchor = AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
-            btnCompare.Location = new Point(12, 208);
+            btnCompare.Location = new Point(12, 234);
             btnCompare.Name = "btnCompare";
             btnCompare.Size = new Size(460, 43);
             btnCompare.TabIndex = 4;
@@ -133,11 +134,12 @@
             // 
             gbOptions.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
             gbOptions.Controls.Add(chkDry);
+            gbOptions.Controls.Add(chkIncludeDirs);
             gbOptions.Controls.Add(chkIncludeUnchanged);
             gbOptions.Controls.Add(chkIncludeNegatives);
             gbOptions.Location = new Point(12, 102);
             gbOptions.Name = "gbOptions";
-            gbOptions.Size = new Size(460, 100);
+            gbOptions.Size = new Size(460, 126);
             gbOptions.TabIndex = 5;
             gbOptions.TabStop = false;
             gbOptions.Text = "Options";
@@ -145,17 +147,27 @@
             // chkDry
             // 
             chkDry.AutoSize = true;
-            chkDry.Location = new Point(17, 72);
+            chkDry.Location = new Point(17, 22);
             chkDry.Name = "chkDry";
             chkDry.Size = new Size(286, 19);
             chkDry.TabIndex = 0;
             chkDry.Text = "Dry run (provide information only, no file output)";
             chkDry.UseVisualStyleBackColor = true;
             // 
+            // chkIncludeDirs
+            // 
+            chkIncludeDirs.AutoSize = true;
+            chkIncludeDirs.Location = new Point(17, 97);
+            chkIncludeDirs.Name = "chkIncludeDirs";
+            chkIncludeDirs.Size = new Size(283, 19);
+            chkIncludeDirs.TabIndex = 0;
+            chkIncludeDirs.Text = "Include directories (affects output size +20~30%)";
+            chkIncludeDirs.UseVisualStyleBackColor = true;
+            // 
             // chkIncludeUnchanged
             // 
             chkIncludeUnchanged.AutoSize = true;
-            chkIncludeUnchanged.Location = new Point(17, 47);
+            chkIncludeUnchanged.Location = new Point(17, 72);
             chkIncludeUnchanged.Name = "chkIncludeUnchanged";
             chkIncludeUnchanged.Size = new Size(319, 19);
             chkIncludeUnchanged.TabIndex = 0;
@@ -166,7 +178,7 @@
             // 
             chkIncludeNegatives.AutoSize = true;
             chkIncludeNegatives.ForeColor = Color.Red;
-            chkIncludeNegatives.Location = new Point(17, 22);
+            chkIncludeNegatives.Location = new Point(17, 47);
             chkIncludeNegatives.Name = "chkIncludeNegatives";
             chkIncludeNegatives.Size = new Size(343, 19);
             chkIncludeNegatives.TabIndex = 0;
@@ -178,7 +190,7 @@
             AutoScaleDimensions = new SizeF(7F, 15F);
             AutoScaleMode = AutoScaleMode.Font;
             BackColor = SystemColors.Window;
-            ClientSize = new Size(484, 263);
+            ClientSize = new Size(484, 289);
             Controls.Add(gbOptions);
             Controls.Add(btnCompare);
             Controls.Add(gbFiles);
@@ -207,5 +219,6 @@
         private CheckBox chkIncludeNegatives;
         private CheckBox chkDry;
         private CheckBox chkIncludeUnchanged;
+        private CheckBox chkIncludeDirs;
     }
 }

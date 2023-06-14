@@ -83,9 +83,10 @@ namespace WizTreeCompare
             {
                 WTComparer comparer = new WTComparer(txtPast.Text, txtFuture.Text)
                 {
+                    Dry = chkDry.Checked,
                     IncludeNegatives = chkIncludeNegatives.Checked,
                     IncludeUnchanged = chkIncludeUnchanged.Checked,
-                    Dry = chkDry.Checked,
+                    IncludeDirectories = chkIncludeDirs.Checked,
                     CancellationToken = token.Token
                 };
                 comparer.CompareAndSave(output);

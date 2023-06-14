@@ -24,7 +24,7 @@
                 Console.Write($" ");
                 Console.ForegroundColor = ConsoleColor.Black;
                 Console.BackgroundColor = ConsoleColor.Gray;
-                Console.WriteLine($" v{typeof(FormMain).Assembly.GetName().Version.ToString(3)}-RC.1 ");
+                Console.WriteLine($" v{typeof(FormMain).Assembly.GetName().Version.ToString(3)}-RC.2 ");
                 Console.ForegroundColor = prevfg;
                 Console.BackgroundColor = prevbg;
                 Console.WriteLine();
@@ -44,12 +44,12 @@
             {
                 WTComparer comparer = new WTComparer(args[1], args[2], true)
                 {
+                    Dry = args[0].Contains('d'),
+                    ProbeMode = args[0].Contains('p'),
                     IncludeNegatives = args[0].Contains('f') || args[0].Contains('n'),
                     IncludeUnchanged = args[0].Contains('f') || args[0].Contains('u'),
-                    Dry = args[0].Contains('d'),
+                    IncludeDirectories = args[0].Contains('f') || args[0].Contains('D'),
                     ForceYes = args[0].Contains('Y'),
-                    ProbeMode = args[0].Contains('p'),
-                    IncludeDirectories = args[0].Contains('D'),
                 };
                 comparer.CompareAndSave(args[3]);
             }
@@ -70,7 +70,7 @@
                 Console.BackgroundColor = prevbg;
                 Console.WriteLine("d - Dry run");
                 Console.WriteLine("p - Probe (reduced verbosity for easier post-processing, consider using 'Y' as well)");
-                Console.WriteLine("f - Full differential (implies 'n' and 'u')");
+                Console.WriteLine("f - Full differential (implies 'n', 'u', and 'D')");
                 Console.WriteLine("n - Include negative differences (deleted files and reduced/trunacted file sizes)");
                 Console.WriteLine("u - Include zero differences (unchanged file sizes)");
                 Console.WriteLine("D - Include directories (without this option directory entries are skipped by default)");

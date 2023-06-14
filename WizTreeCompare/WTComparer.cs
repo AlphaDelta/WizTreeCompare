@@ -35,7 +35,7 @@ namespace WizTreeCompare
         ConsoleColor prevfg;
         ConsoleColor prevbg;
 
-        public void CompareAndSave(string outputpath) //TODO: Check full differential, add option to include zeroes
+        public void CompareAndSave(string outputpath)
         {
             prevfg = Console.ForegroundColor;
             prevbg = Console.BackgroundColor;
@@ -113,8 +113,8 @@ namespace WizTreeCompare
                         progress.InvokeLater();
 
                         /* Work */
-                        if (row.FileName.EndsWith('\\') || row.FileName.EndsWith('/'))
-                            continue; // It's a folder, we don't care about folders
+                        if (!IncludeDirectories && row.IsDirectory)
+                            continue; // It's a folder and we don't care
 
                         pastrows[row.FileName] = row;
                     }
@@ -126,6 +126,8 @@ namespace WizTreeCompare
             LogToConsole("Reading future CSV and populating output differential file...");
             int additions = 0, modifications = 0, deletions = 0, nochange = 0;
             long addbyte = 0, subbyte = 0, diffbyte = 0;
+            int diradditions = 0, dirmodifications = 0, dirdeletions = 0, dirnochange = 0;
+            long diraddbyte = 0, dirsubbyte = 0, dirdiffbyte = 0;
             using (var writer = Dry ? StreamWriter.Null : new StreamWriter(outputpath, false, Encoding.UTF8))
             using (var csvoutput = new CsvWriter(writer, new CsvHelper.Configuration.CsvConfiguration(System.Globalization.CultureInfo.InvariantCulture)
             {
@@ -163,16 +165,26 @@ namespace WizTreeCompare
                             progress.InvokeLater();
 
                             /* Work */
-                            if (futurerow.FileName.EndsWith('\\') || futurerow.FileName.EndsWith('/'))
-                                continue; // It's a folder, we don't care about folders
+                            if (!IncludeDirectories && futurerow.IsDirectory)
+                                continue; // It's a folder and we don't care
 
                             if (!pastrows.ContainsKey(futurerow.FileName))
                             {
                                 //It's a new file, add it as-is
                                 csvoutput.NextRecord();
                                 csvoutput.WriteRecord(futurerow);
-                                additions++;
-                                addbyte += futurerow.Size;
+                                if (!futurerow.IsDirectory)
+                                {
+                                    //File
+                                    additions++;
+                                    addbyte += futurerow.Size;
+                                }
+                                else
+                                {
+                                    //Directory
+                                    diradditions++;
+                                    diraddbyte += futurerow.Size;
+                                }
                             }
                             else
                             {
@@ -198,15 +210,32 @@ namespace WizTreeCompare
                                 csvoutput.NextRecord();
                                 csvoutput.WriteRecord(newrow);
 
-                                if (newrow.Size == 0)
-                                    nochange++;
-                                else
-                                    modifications++;
+                                if (!futurerow.IsDirectory)
+                                {
+                                    //File
+                                    if (newrow.Size == 0)
+                                        nochange++;
+                                    else
+                                        modifications++;
 
-                                if (newrow.Size > 0)
-                                    addbyte += newrow.Size;
+                                    if (newrow.Size > 0)
+                                        addbyte += newrow.Size;
+                                    else
+                                        subbyte += -newrow.Size;
+                                }
                                 else
-                                    subbyte += -newrow.Size;
+                                {
+                                    //Directory
+                                    if (newrow.Size == 0)
+                                        dirnochange++;
+                                    else
+                                        dirmodifications++;
+
+                                    if (newrow.Size > 0)
+                                        diraddbyte += newrow.Size;
+                                    else
+                                        dirsubbyte += -newrow.Size;
+                                }
                             }
                         }/*end foreach*/
                     }/*end using CsvReader*/
@@ -245,8 +274,18 @@ namespace WizTreeCompare
 
                             csvoutput.NextRecord();
                             csvoutput.WriteRecord(newrow);
-                            deletions++;
-                            subbyte += kv.Value.Size;
+                            if (!kv.Value.IsDirectory)
+                            {
+                                //File
+                                deletions++;
+                                subbyte += kv.Value.Size;
+                            }
+                            else
+                            {
+                                //Directory
+                                dirdeletions++;
+                                dirsubbyte += kv.Value.Size;
+                            }
                         }
                     }
 
@@ -260,11 +299,21 @@ namespace WizTreeCompare
             {
                 LogToConsole($"Files - {additions} additions - {deletions:0;'N/A';0} deletions - {modifications} modifications", LogType.InfoImportant);
                 LogToConsole($"Bytes - {addbyte} added - {subbyte:0;'N/A';0} subtracted - {bytediff:+0;-0;0} differential", LogType.InfoImportant);
+                LogToConsole($"Folders - {diradditions} additions - {dirdeletions:0;'N/A';0} deletions - {dirmodifications} modifications", LogType.InfoImportant);
+                LogToConsole($"Folderbytes - {addbyte} added - {subbyte:0;'N/A';0} subtracted - {bytediff:+0;-0;0} differential", LogType.InfoImportant);
             }
             else
             {
+
                 LogToConsole($"Files - {additions:#,0} additions - {deletions:#,0;'N/A';0} deletions - {modifications:#,0} modifications", LogType.InfoImportant);
-                LogToConsole($"Bytes - {BytesToString(addbyte)} added - {(subbyte < 0 ? "N/A" : BytesToString(subbyte))} subtracted - {bytediff:+;-;}{BytesToString(bytediff)} differential", LogType.InfoImportant);
+                if (!IncludeDirectories)
+                    LogToConsole($"Bytes - {BytesToString(addbyte)} added - {(subbyte < 0 ? "N/A" : BytesToString(subbyte))} subtracted - {bytediff:+;-;}{BytesToString(bytediff)} differential", LogType.InfoImportant);
+                else
+                {
+                    LogToConsole($"Bytes (Considering files only) - {BytesToString(addbyte)} added - {(subbyte < 0 ? "N/A" : BytesToString(subbyte))} subtracted - {bytediff:+;-;}{BytesToString(bytediff)} differential", LogType.InfoImportant);
+                    LogToConsole($"Folders - {diradditions:#,0} additions - {dirdeletions:#,0;'N/A';0} deletions - {dirmodifications:#,0} modifications", LogType.InfoImportant);
+                    LogToConsole($"Bytes (Considering folders only) - {BytesToString(addbyte)} added - {(subbyte < 0 ? "N/A" : BytesToString(subbyte))} subtracted - {bytediff:+;-;}{BytesToString(bytediff)} differential", LogType.InfoImportant);
+                }
             }
 
             if (!Dry)
