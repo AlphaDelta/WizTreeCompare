@@ -41,6 +41,8 @@
             chkIncludeDirs = new CheckBox();
             chkIncludeUnchanged = new CheckBox();
             chkIncludeNegatives = new CheckBox();
+            btnViewer = new Button();
+            btnClose = new Button();
             gbFiles.SuspendLayout();
             gbOptions.SuspendLayout();
             SuspendLayout();
@@ -124,7 +126,7 @@
             btnCompare.Anchor = AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
             btnCompare.Location = new Point(12, 234);
             btnCompare.Name = "btnCompare";
-            btnCompare.Size = new Size(460, 43);
+            btnCompare.Size = new Size(233, 43);
             btnCompare.TabIndex = 4;
             btnCompare.Text = "Compare...";
             btnCompare.UseVisualStyleBackColor = true;
@@ -185,12 +187,36 @@
             chkIncludeNegatives.Text = "Include negatives (includes deleted files and size reductions)";
             chkIncludeNegatives.UseVisualStyleBackColor = true;
             // 
+            // btnViewer
+            // 
+            btnViewer.Anchor = AnchorStyles.Bottom | AnchorStyles.Right;
+            btnViewer.Location = new Point(251, 234);
+            btnViewer.Name = "btnViewer";
+            btnViewer.Size = new Size(108, 43);
+            btnViewer.TabIndex = 6;
+            btnViewer.Text = "Viewer";
+            btnViewer.UseVisualStyleBackColor = true;
+            btnViewer.Click += btnViewer_Click;
+            // 
+            // btnClose
+            // 
+            btnClose.Anchor = AnchorStyles.Bottom | AnchorStyles.Right;
+            btnClose.Location = new Point(365, 234);
+            btnClose.Name = "btnClose";
+            btnClose.Size = new Size(107, 43);
+            btnClose.TabIndex = 6;
+            btnClose.Text = "Exit";
+            btnClose.UseVisualStyleBackColor = true;
+            btnClose.Click += btnClose_Click;
+            // 
             // FormMain
             // 
             AutoScaleDimensions = new SizeF(7F, 15F);
             AutoScaleMode = AutoScaleMode.Font;
             BackColor = SystemColors.Window;
             ClientSize = new Size(484, 289);
+            Controls.Add(btnClose);
+            Controls.Add(btnViewer);
             Controls.Add(gbOptions);
             Controls.Add(btnCompare);
             Controls.Add(gbFiles);
@@ -220,5 +246,7 @@
         private CheckBox chkDry;
         private CheckBox chkIncludeUnchanged;
         private CheckBox chkIncludeDirs;
+        private Button btnViewer;
+        private Button btnClose;
     }
 }
