@@ -294,25 +294,26 @@ namespace WizTreeCompare
             }/*end using CsvWriter*/
 
             long bytediff = addbyte - subbyte;
-            if (!IncludeNegatives) subbyte = deletions = -1;
+            long dirbytediff = diraddbyte - dirsubbyte;
+            if (!IncludeNegatives) subbyte = dirsubbyte = deletions = dirdeletions = -1;
             if (ProbeMode)
             {
                 LogToConsole($"Files - {additions} additions - {deletions:0;'N/A';0} deletions - {modifications} modifications", LogType.InfoImportant);
                 LogToConsole($"Bytes - {addbyte} added - {subbyte:0;'N/A';0} subtracted - {bytediff:+0;-0;0} differential", LogType.InfoImportant);
                 LogToConsole($"Folders - {diradditions} additions - {dirdeletions:0;'N/A';0} deletions - {dirmodifications} modifications", LogType.InfoImportant);
-                LogToConsole($"Folderbytes - {addbyte} added - {subbyte:0;'N/A';0} subtracted - {bytediff:+0;-0;0} differential", LogType.InfoImportant);
+                LogToConsole($"Folderbytes - {diraddbyte} added - {dirsubbyte:0;'N/A';0} subtracted - {dirbytediff:+0;-0;0} differential", LogType.InfoImportant);
             }
             else
             {
 
                 LogToConsole($"Files - {additions:#,0} additions - {deletions:#,0;'N/A';0} deletions - {modifications:#,0} modifications", LogType.InfoImportant);
                 if (!IncludeDirectories)
-                    LogToConsole($"Bytes - {BytesToString(addbyte)} added - {(subbyte < 0 ? "N/A" : BytesToString(subbyte))} subtracted - {bytediff:+;-;}{BytesToString(bytediff)} differential", LogType.InfoImportant);
+                    LogToConsole($"Bytes - {BytesToString(addbyte)} added - {(subbyte < 0 ? "N/A" : BytesToString(subbyte))} subtracted - {bytediff:+;'';''}{BytesToString(bytediff)} differential", LogType.InfoImportant);
                 else
                 {
-                    LogToConsole($"Bytes (Considering files only) - {BytesToString(addbyte)} added - {(subbyte < 0 ? "N/A" : BytesToString(subbyte))} subtracted - {bytediff:+;-;}{BytesToString(bytediff)} differential", LogType.InfoImportant);
+                    LogToConsole($"Bytes (Considering files only) - {BytesToString(addbyte)} added - {(subbyte < 0 ? "N/A" : BytesToString(subbyte))} subtracted - {bytediff:+;'';''}{BytesToString(bytediff)} differential", LogType.InfoImportant);
                     LogToConsole($"Folders - {diradditions:#,0} additions - {dirdeletions:#,0;'N/A';0} deletions - {dirmodifications:#,0} modifications", LogType.InfoImportant);
-                    LogToConsole($"Bytes (Considering folders only) - {BytesToString(addbyte)} added - {(subbyte < 0 ? "N/A" : BytesToString(subbyte))} subtracted - {bytediff:+;-;}{BytesToString(bytediff)} differential", LogType.InfoImportant);
+                    LogToConsole($"Bytes (Considering folders only) - {BytesToString(diraddbyte)} added - {(dirsubbyte < 0 ? "N/A" : BytesToString(dirsubbyte))} subtracted - {dirbytediff:+;'';''}{BytesToString(dirbytediff)} differential", LogType.InfoImportant);
                 }
             }
 
