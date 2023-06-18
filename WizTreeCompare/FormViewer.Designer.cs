@@ -34,6 +34,7 @@
             split = new SplitContainer();
             treeMain = new TreeView();
             treeAnc = new TreeView();
+            lblStatus = new Label();
             menu.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)split).BeginInit();
             split.Panel1.SuspendLayout();
@@ -55,6 +56,7 @@
             menuOpen.Name = "menuOpen";
             menuOpen.Size = new Size(57, 22);
             menuOpen.Text = "&Open...";
+            menuOpen.Click += menuOpen_Click;
             // 
             // menuSearch
             // 
@@ -72,6 +74,7 @@
             // 
             // split.Panel1
             // 
+            split.Panel1.Controls.Add(lblStatus);
             split.Panel1.Controls.Add(treeMain);
             // 
             // split.Panel2
@@ -87,6 +90,7 @@
             treeMain.Dock = DockStyle.Fill;
             treeMain.Location = new Point(0, 0);
             treeMain.Name = "treeMain";
+            treeMain.PathSeparator = "|";
             treeMain.Size = new Size(533, 424);
             treeMain.TabIndex = 0;
             // 
@@ -95,8 +99,21 @@
             treeAnc.Dock = DockStyle.Fill;
             treeAnc.Location = new Point(0, 0);
             treeAnc.Name = "treeAnc";
+            treeAnc.PathSeparator = "|";
             treeAnc.Size = new Size(263, 424);
             treeAnc.TabIndex = 1;
+            // 
+            // lblStatus
+            // 
+            lblStatus.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
+            lblStatus.BackColor = Color.MediumTurquoise;
+            lblStatus.Location = new Point(0, 0);
+            lblStatus.Name = "lblStatus";
+            lblStatus.Size = new Size(533, 24);
+            lblStatus.TabIndex = 2;
+            lblStatus.Text = "Loading 0%";
+            lblStatus.TextAlign = ContentAlignment.MiddleCenter;
+            lblStatus.Visible = false;
             // 
             // FormViewer
             // 
@@ -126,5 +143,6 @@
         private TreeView treeAnc;
         private ToolStripMenuItem menuOpen;
         private ToolStripTextBox menuSearch;
+        private Label lblStatus;
     }
 }

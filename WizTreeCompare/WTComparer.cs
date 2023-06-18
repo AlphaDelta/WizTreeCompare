@@ -76,9 +76,9 @@ namespace WizTreeCompare
             /* Set up progress logger */
             int nrow = 0;
             TimeSpan tickrate = TimeSpan.FromMilliseconds(300);
-            var action = (ProgressContext ctx) => { };
+            var action = (ProgressContextConsole ctx) => { };
             if (!ProbeMode)
-                action = (ProgressContext ctx) =>
+                action = (ProgressContextConsole ctx) =>
                 {
                     if (ctx.ProgressCurrent >= 0 && ctx.ProgressTotal > 0)
                         ctx.AnnounceProgress($"Accessing row {nrow}, {(ctx.ProgressCurrent / ctx.ProgressTotal) * 100:0.00}% complete, running for {(DateTime.Now - ctx.StartTime):m'm 's's 'fff'ms'}");
@@ -91,7 +91,7 @@ namespace WizTreeCompare
             LogToConsole("Reading past CSV and populating dictionary...");
             Dictionary<string, WTCsvRow> pastrows = new Dictionary<string, WTCsvRow>();
             if (CancellationToken.IsCancellationRequested) return; // <X>
-            using (var progress = new ProgressContext(tickrate, action))
+            using (var progress = new ProgressContextConsole(tickrate, action))
             using (var sr = new StreamReader(PastPath, Encoding.UTF8))
             {
                 progress.StartTime = DateTime.Now;
@@ -125,9 +125,9 @@ namespace WizTreeCompare
             /* FUTURE CSV subtract PAST CSV */
             LogToConsole("Reading future CSV and populating output differential file...");
             int additions = 0, modifications = 0, deletions = 0, nochange = 0;
-            long addbyte = 0, subbyte = 0, diffbyte = 0;
+            long addbyte = 0, subbyte = 0;
             int diradditions = 0, dirmodifications = 0, dirdeletions = 0, dirnochange = 0;
-            long diraddbyte = 0, dirsubbyte = 0, dirdiffbyte = 0;
+            long diraddbyte = 0, dirsubbyte = 0;
             using (var writer = Dry ? StreamWriter.Null : new StreamWriter(outputpath, false, Encoding.UTF8))
             using (var csvoutput = new CsvWriter(writer, new CsvHelper.Configuration.CsvConfiguration(System.Globalization.CultureInfo.InvariantCulture)
             {
@@ -136,7 +136,7 @@ namespace WizTreeCompare
             {
                 HashSet<string> seen = new HashSet<string>(pastrows.Count);
 
-                using (var progress = new ProgressContext(tickrate, action))
+                using (var progress = new ProgressContextConsole(tickrate, action))
                 using (var sr = new StreamReader(FuturePath, Encoding.UTF8))
                 {
                     /* Progress */
@@ -247,7 +247,7 @@ namespace WizTreeCompare
                 {
                     LogToConsole("Finding and populating deletions...");
 
-                    using (var progress = new ProgressContext(tickrate, action))
+                    using (var progress = new ProgressContextConsole(tickrate, action))
                     {
                         /* Progress */
                         nrow = 0;
@@ -338,86 +338,6 @@ namespace WizTreeCompare
             int place = Convert.ToInt32(Math.Floor(Math.Log(bytes, 1024)));
             double num = Math.Round(bytes / Math.Pow(1024, place), 1);
             return (Math.Sign(byteCount) * num).ToString("0.###") + suf[place];
-        }
-
-        protected class LaterContext<TSelf>
-        {
-            public TimeSpan Delay;
-            public Action<TSelf> Action;
-            public Task Task = Task.CompletedTask;
-            public Dictionary<string, object> Memory = new Dictionary<string, object>(8);
-
-            public CancellationTokenSource TokenSource = new CancellationTokenSource();
-
-            public LaterContext(TimeSpan tickrate, Action<TSelf> action)
-            {
-                Delay = tickrate;
-                Action = action;
-            }
-
-            public Task InvokeLater()
-            {
-
-                if (!this.Task.IsCompleted) return this.Task;
-
-                this.Task = Task.Run(async () =>
-                {
-                    await Task.Delay(this.Delay, TokenSource.Token);
-
-                    if (!TokenSource.Token.IsCancellationRequested)
-                        this.Action.DynamicInvoke(this);
-                });
-
-                return this.Task;
-            }
-        }
-
-        protected class ProgressContext : LaterContext<ProgressContext>, IDisposable
-        {
-            public int CursorX = -1, CursorY = -1;
-
-            public float ProgressCurrent = -1, ProgressTotal = -1;
-
-            public DateTime StartTime = DateTime.Now;
-
-            public ProgressContext(TimeSpan tickrate, Action<ProgressContext> action) : base(tickrate, action) { }
-
-            public void AnnounceProgress(string msg)
-            {
-                /* Console */
-                if (this.CursorX < 0 || this.CursorY < 0)
-                {
-                    this.CursorX = Console.CursorLeft;
-                    this.CursorY = Console.CursorTop;
-                    Console.WriteLine();
-                }
-
-                int prevcursorX = Console.CursorLeft;
-                int prevcursorY = Console.CursorTop;
-                Console.CursorLeft = this.CursorX;
-                Console.CursorTop = this.CursorY;
-
-                ConsoleColor prevfg = Console.ForegroundColor;
-                Console.ForegroundColor = ConsoleColor.DarkGreen;
-                Console.Write($" % ");
-                Console.ForegroundColor = ProgressCurrent >= ProgressTotal ? ConsoleColor.Green : (prevfg == ConsoleColor.Gray ? ConsoleColor.DarkGray : (ConsoleColor)((byte)prevfg ^ 0x08));
-                Console.Write($" ");
-                Console.WriteLine(msg);
-                Console.ForegroundColor = prevfg;
-
-                Console.CursorLeft = prevcursorX;
-                Console.CursorTop = prevcursorY;
-            }
-
-            public void Dispose()
-            {
-                TokenSource.Cancel();
-                this.Action(this);
-
-                this.ProgressCurrent = 0;
-                this.CursorX = -1;
-                this.CursorY = -1;
-            }
         }
 
         enum LogType { Success = 0, Info = 1, InfoImportant = 1 | 0x08, Warning = 2 | 0x08, Error = 3 | 0x08 }

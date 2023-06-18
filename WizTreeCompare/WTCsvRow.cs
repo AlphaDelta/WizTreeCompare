@@ -27,8 +27,8 @@ namespace WizTreeCompare
         private bool? _IsDirectory = null;
         [Ignore]
         public bool IsDirectory => _IsDirectory ??=
-                this.FileName.EndsWith('\\')
-                || this.FileName.EndsWith('/')
+                this.FileName.EndsWith(Path.DirectorySeparatorChar)
+                || this.FileName.EndsWith(Path.AltDirectorySeparatorChar)
                 || (this.Attributes & FILE_ATTRIBUTE_DIRECTORY) > 0;
     }
 }

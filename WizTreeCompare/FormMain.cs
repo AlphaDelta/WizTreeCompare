@@ -68,14 +68,14 @@ namespace WizTreeCompare
             }
         }
 
-        CancellationTokenSource token = new CancellationTokenSource();
+        CancellationTokenSource tokenSource = new CancellationTokenSource();
         Task tcompare = Task.CompletedTask;
-        string lastsavepath = null;
+        internal string lastsavepath = null;
         private void btnCompare_Click(object sender, EventArgs e)
         {
             if (!tcompare.IsCompleted)
             {
-                token.Cancel();
+                tokenSource.Cancel();
                 return;
             }
 
@@ -89,7 +89,7 @@ namespace WizTreeCompare
                     IncludeNegatives = chkIncludeNegatives.Checked,
                     IncludeUnchanged = chkIncludeUnchanged.Checked,
                     IncludeDirectories = chkIncludeDirs.Checked,
-                    CancellationToken = token.Token
+                    CancellationToken = tokenSource.Token
                 };
                 comparer.CompareAndSave(output);
                 if (!chkDry.Checked) lastsavepath = output;
@@ -101,8 +101,8 @@ namespace WizTreeCompare
                     btnCompare.Enabled = true;
                     btnClose.Enabled = true;
 
-                    token.Dispose();
-                    token = new CancellationTokenSource();
+                    tokenSource.Dispose();
+                    tokenSource = new CancellationTokenSource();
                 });
             });
 
