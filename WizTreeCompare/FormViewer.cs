@@ -7,6 +7,7 @@ using System.Data;
 using System.Diagnostics;
 using System.Drawing;
 using System.Drawing.Drawing2D;
+using System.Drawing.Imaging;
 using System.IO;
 using System.Linq;
 using System.Reflection;
@@ -27,6 +28,8 @@ namespace WizTreeCompare
             treeMain.DrawMode = TreeViewDrawMode.OwnerDrawAll;
             treeMain.DrawNode += TreeMain_DrawNode;
 
+            treeMain.MouseMove += TreeMain_MouseMove;
+
             treeMain.BeforeExpand += TreeMain_BeforeExpand;
 
             //TODO: Change to TreeView.DoubleBuffered in dotnet 8
@@ -37,6 +40,21 @@ namespace WizTreeCompare
             ParameterInfo[] _p;
             if (method != null && (_p = method.GetParameters()).Length == 1 && _p[0].ParameterType == typeof(TreeView))
                 method.Invoke(null, new object[] { treeMain });
+        }
+
+        TreeNode nodelasthover = null;
+        private void TreeMain_MouseMove(object sender, MouseEventArgs e)
+        {
+            TreeNode n = treeMain.GetNodeAt(e.Location);
+            //if (n != null && n.Parent != null)
+            //    n = n.Parent;
+
+            if (nodelasthover == n)
+                return;
+
+            //TreeNode old = nodelasthover;
+            nodelasthover = n;
+            treeMain.Invalidate();
         }
 
         private void TreeMain_BeforeExpand(object sender, TreeViewCancelEventArgs e)
@@ -50,55 +68,107 @@ namespace WizTreeCompare
         }
 
         const string NODE_PLACEHOLDER = ".!placeholder";
-        LinearGradientBrush diffback = null, diffpos = null, diffneg = null;
-        Brush difftextpos = new SolidBrush(Color.FromArgb(0, 0, 150));
-        Brush difftextneg = new SolidBrush(Color.FromArgb(150, 0, 0));
-        Brush difftextnone = new SolidBrush(Color.FromArgb(18, 10, 26));
+        const int NODE_DIFF_WIDTH = 100;
+        const byte NODE_INACTIVE_ALPHA = 100;
+        LinearGradientBrush diffback = null, diffpos = null, diffneg = null, diffbackinactive = null, diffposinactive = null, diffneginactive = null;
+        SolidBrush difftextpos = new SolidBrush(Color.FromArgb(0, 0, 150));
+        SolidBrush difftextneg = new SolidBrush(Color.FromArgb(150, 0, 0));
+        SolidBrush difftextnone = new SolidBrush(Color.FromArgb(18, 10, 26));
         Pen linecolor = new Pen(Color.FromArgb(80, SystemColors.ActiveBorder));
-        Pen linecolorvalue = new Pen(Color.FromArgb(80, SystemColors.ActiveBorder)) { DashStyle = DashStyle.Dot };
+        Pen linecolorvalue = new Pen(Color.FromArgb(80, SystemColors.ActiveBorder));
+        ImageAttributes attribActive = new ImageAttributes();
+        ImageAttributes attribParentFocus = new ImageAttributes();
+        ImageAttributes attribInactive = new ImageAttributes();
         private void TreeMain_DrawNode(object sender, DrawTreeNodeEventArgs e)
         {
-            e.DrawDefault = true;
-
             if (e.Node.IsVisible && e.Node.Name != NODE_PLACEHOLDER)
             {
-                const int NODE_DIFF_WIDTH = 100;
-
-                long diff = ((NodeTag)e.Node.Tag).Size;
-                float influence = ((NodeTag)e.Node.Tag).Influence;
-
                 e.Graphics.FillRectangle(SystemBrushes.Window, e.Bounds);
-                e.Graphics.DrawString(
-                    WTComparer.BytesToString(diff),
-                    e.Node.TreeView.Font, (diff > 0 ? difftextpos : (diff < 0 ? difftextneg : difftextnone)),
-                    new Rectangle(e.Bounds.X + 200, e.Bounds.Y, e.Bounds.Width - 200 - NODE_DIFF_WIDTH, e.Bounds.Height),
-                    new StringFormat()
-                    {
-                        Alignment = StringAlignment.Far
-                    });
 
-                if (diffback == null)
+                using (Bitmap bmp = new Bitmap(e.Bounds.Width, e.Bounds.Height))
+                using (Graphics g = Graphics.FromImage(bmp))
                 {
-                    diffback = new LinearGradientBrush(new Point(0, 0), new Point(0, e.Bounds.Height), Color.FromArgb(235, 235, 245), Color.White);
-                    diffpos = new LinearGradientBrush(new Point(0, 0), new Point(0, e.Bounds.Height), Color.White, Color.FromArgb(200, 200, 255));
-                    diffneg = new LinearGradientBrush(new Point(0, 0), new Point(0, e.Bounds.Height), Color.White, Color.FromArgb(255, 200, 200));
+                    g.Clear(SystemColors.Window);
+
+                    long diff = ((NodeTag)e.Node.Tag).Size;
+                    float influence = ((NodeTag)e.Node.Tag).Influence;
+
+                    /* Brushes */
+                    if (diffback == null)
+                    {
+                        diffback = new LinearGradientBrush(new Point(0, 0), new Point(0, e.Bounds.Height), Color.FromArgb(235, 235, 245), Color.White);
+                        diffpos = new LinearGradientBrush(new Point(0, 0), new Point(0, e.Bounds.Height), Color.White, Color.FromArgb(200, 200, 255));
+                        diffneg = new LinearGradientBrush(new Point(0, 0), new Point(0, e.Bounds.Height), Color.White, Color.FromArgb(255, 200, 200));
+
+                        attribActive.SetColorMatrix(new ColorMatrix(), ColorMatrixFlag.Default, ColorAdjustType.Bitmap);
+                        attribParentFocus.SetColorMatrix(new ColorMatrix(new float[][]
+                            {
+                                new float[] {.3f, .3f, .3f, 0, 0},
+                                new float[] {.59f, .59f, .59f, 0, 0},
+                                new float[] {.11f, .11f, .11f, 0, 0},
+                                new float[] {0, 0, 0, .5f, 0},
+                                new float[] {0, 0, 0, 0, 1}
+                            }), ColorMatrixFlag.Default, ColorAdjustType.Bitmap);
+                        attribInactive.SetColorMatrix(new ColorMatrix(
+                            new float[][]
+                            {
+                                new float[] {.3f, .3f, .3f, 0, 0},
+                                new float[] {.59f, .59f, .59f, 0, 0},
+                                new float[] {.11f, .11f, .11f, 0, 0},
+                                new float[] {0, 0, 0, .20f, 0},
+                                new float[] {0, 0, 0, 0, 1}
+                            }), ColorMatrixFlag.Default, ColorAdjustType.Bitmap);
+                    }
+                    /* Text */
+                    g.DrawString(
+                        WTComparer.BytesToString(diff),
+                        e.Node.TreeView.Font, (diff > 0 ? difftextpos : (diff < 0 ? difftextneg : difftextnone)),
+                        new Rectangle(200, 0, bmp.Width - 200 - NODE_DIFF_WIDTH, bmp.Height),
+                        new StringFormat()
+                        {
+                            Alignment = StringAlignment.Far
+                        });
+
+                    /* Diff rect */
+                    var diffrect = new Rectangle(bmp.Width - NODE_DIFF_WIDTH, 0, NODE_DIFF_WIDTH, e.Bounds.Height);
+                    diffrect.Inflate(-10, -2);
+                    g.FillRectangle(diffback, diffrect);
+
+                    int midwidth = (int)Math.Round(diffrect.Width / 2f);
+                    int middle = diffrect.Left + midwidth;
+                    float value = (int)Math.Abs(midwidth * influence);
+                    var diffvalrect = new Rectangle(influence > 0 ? middle : (int)(middle - value), diffrect.Y, (int)value, diffrect.Height);
+                    g.FillRectangle(influence > 0 ? diffpos : (influence < 0 ? diffneg : Brushes.Transparent), diffvalrect);
+
+                    float valueline = influence > 0 ? diffvalrect.Right : diffvalrect.Left;
+                    g.DrawLine(linecolor, middle, diffrect.Top, middle, diffrect.Bottom); //Center line
+                    g.DrawLine(linecolor, valueline, diffrect.Top, valueline, diffrect.Bottom); //Value line
+                    g.DrawRectangle(SystemPens.ActiveBorder, diffrect);
+
+                    /* Composite */
+                    var opacityMatrix = e.Node == nodelasthover || e.Node.Parent == nodelasthover ? attribActive : attribInactive;
+                    TreeNode p = nodelasthover;
+                    if (p != null)
+                        while (opacityMatrix == attribInactive && (p = p.Parent) != null)
+                            if (p == e.Node)
+                            {
+                                opacityMatrix = attribActive;
+                                break;
+                            }
+
+                    p = e.Node;
+                    if (opacityMatrix == attribInactive && p.Parent != null && p.Parent.Nodes.Contains(nodelasthover))
+                        opacityMatrix = attribParentFocus;
+                    else
+                        while (opacityMatrix == attribInactive && (p = p.Parent) != null)
+                            if (p == nodelasthover)
+                                opacityMatrix = attribParentFocus;
+
+                    e.Graphics.DrawImage(bmp, e.Bounds, 0, 0, bmp.Width, bmp.Height, GraphicsUnit.Pixel, opacityMatrix);
                 }
-
-                var diffrect = new Rectangle(e.Bounds.Right - NODE_DIFF_WIDTH, e.Bounds.Y, NODE_DIFF_WIDTH, e.Bounds.Height);
-                diffrect.Inflate(-10, -2);
-                e.Graphics.FillRectangle(diffback, diffrect);
-
-                int midwidth = (int)Math.Round(diffrect.Width / 2f);
-                int middle = diffrect.Left + midwidth;
-                float value = (int)Math.Abs(midwidth * influence);
-                var diffvalrect = new Rectangle(influence > 0 ? middle : (int)(middle - value), diffrect.Y, (int)value, diffrect.Height);
-                e.Graphics.FillRectangle(influence > 0 ? diffpos : (influence < 0 ? diffneg : Brushes.Transparent), diffvalrect);
-
-                float valueline = influence > 0 ? diffvalrect.Right : diffvalrect.Left;
-                e.Graphics.DrawLine(linecolor, middle, diffrect.Top, middle, diffrect.Bottom); //Center line
-                e.Graphics.DrawLine(linecolor, valueline, diffrect.Top, valueline, diffrect.Bottom); //Value line
-                e.Graphics.DrawRectangle(SystemPens.ActiveBorder, diffrect);
             }
+
+            e.DrawDefault = true;
         }
 
         private void TreeDiscover(string path, TreeNodeCollection col)
