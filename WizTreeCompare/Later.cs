@@ -51,7 +51,7 @@ namespace WizTreeCompare
         public int CursorX = -1, CursorY = -1;
 
         public float ProgressCurrent = -1, ProgressTotal = -1;
-        public float ProgressPercent => (ProgressCurrent / ProgressTotal) * 100;
+        public float ProgressPercent => Math.Max((ProgressCurrent / ProgressTotal) * 100, 0);
 
         public DateTime StartTime = DateTime.Now;
 

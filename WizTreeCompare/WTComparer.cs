@@ -328,7 +328,7 @@ namespace WizTreeCompare
          *          Helpers
          * ==========================
          */
-        static string BytesToString(long byteCount)
+        public static string BytesToString(long byteCount)
         {
             //https://stackoverflow.com/a/4975942
             string[] suf = { " B", " KiB", " MiB", " GiB", " TiB", " PiB", " EiB" }; //Longs run out around EB

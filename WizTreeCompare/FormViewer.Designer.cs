@@ -32,9 +32,9 @@
             menuOpen = new ToolStripMenuItem();
             menuSearch = new ToolStripTextBox();
             split = new SplitContainer();
+            lblStatus = new Label();
             treeMain = new TreeView();
             treeAnc = new TreeView();
-            lblStatus = new Label();
             menu.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)split).BeginInit();
             split.Panel1.SuspendLayout();
@@ -85,24 +85,6 @@
             split.TabIndex = 1;
             split.TabStop = false;
             // 
-            // treeMain
-            // 
-            treeMain.Dock = DockStyle.Fill;
-            treeMain.Location = new Point(0, 0);
-            treeMain.Name = "treeMain";
-            treeMain.PathSeparator = "|";
-            treeMain.Size = new Size(533, 424);
-            treeMain.TabIndex = 0;
-            // 
-            // treeAnc
-            // 
-            treeAnc.Dock = DockStyle.Fill;
-            treeAnc.Location = new Point(0, 0);
-            treeAnc.Name = "treeAnc";
-            treeAnc.PathSeparator = "|";
-            treeAnc.Size = new Size(263, 424);
-            treeAnc.TabIndex = 1;
-            // 
             // lblStatus
             // 
             lblStatus.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
@@ -114,6 +96,23 @@
             lblStatus.Text = "Loading 0%";
             lblStatus.TextAlign = ContentAlignment.MiddleCenter;
             lblStatus.Visible = false;
+            // 
+            // treeMain
+            // 
+            treeMain.Dock = DockStyle.Fill;
+            treeMain.Location = new Point(0, 0);
+            treeMain.Name = "treeMain";
+            treeMain.Size = new Size(533, 424);
+            treeMain.TabIndex = 0;
+            // 
+            // treeAnc
+            // 
+            treeAnc.Dock = DockStyle.Fill;
+            treeAnc.Location = new Point(0, 0);
+            treeAnc.Name = "treeAnc";
+            treeAnc.PathSeparator = "|";
+            treeAnc.Size = new Size(263, 424);
+            treeAnc.TabIndex = 1;
             // 
             // FormViewer
             // 
