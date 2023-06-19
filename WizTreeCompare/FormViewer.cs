@@ -35,7 +35,7 @@ namespace WizTreeCompare
                 .GetMethod("ApplyTreeViewThemeStyles", BindingFlags.Public | BindingFlags.Static);
 
             ParameterInfo[] _p;
-            if(method != null && (_p = method.GetParameters()).Length == 1 && _p[0].ParameterType == typeof(TreeView))
+            if (method != null && (_p = method.GetParameters()).Length == 1 && _p[0].ParameterType == typeof(TreeView))
                 method.Invoke(null, new object[] { treeMain });
         }
 
@@ -51,6 +51,11 @@ namespace WizTreeCompare
 
         const string NODE_PLACEHOLDER = ".!placeholder";
         LinearGradientBrush diffback = null, diffpos = null, diffneg = null;
+        Brush difftextpos = new SolidBrush(Color.FromArgb(0, 0, 150));
+        Brush difftextneg = new SolidBrush(Color.FromArgb(150, 0, 0));
+        Brush difftextnone = new SolidBrush(Color.FromArgb(18, 10, 26));
+        Pen linecolor = new Pen(Color.FromArgb(80, SystemColors.ActiveBorder));
+        Pen linecolorvalue = new Pen(Color.FromArgb(80, SystemColors.ActiveBorder)) { DashStyle = DashStyle.Dot };
         private void TreeMain_DrawNode(object sender, DrawTreeNodeEventArgs e)
         {
             e.DrawDefault = true;
@@ -59,10 +64,13 @@ namespace WizTreeCompare
             {
                 const int NODE_DIFF_WIDTH = 100;
 
+                long diff = ((NodeTag)e.Node.Tag).Size;
+                float influence = ((NodeTag)e.Node.Tag).Influence;
+
                 e.Graphics.FillRectangle(SystemBrushes.Window, e.Bounds);
                 e.Graphics.DrawString(
-                    WTComparer.BytesToString((long)e.Node.Tag),
-                    e.Node.TreeView.Font, Brushes.Black,
+                    WTComparer.BytesToString(diff),
+                    e.Node.TreeView.Font, (diff > 0 ? difftextpos : (diff < 0 ? difftextneg : difftextnone)),
                     new Rectangle(e.Bounds.X + 200, e.Bounds.Y, e.Bounds.Width - 200 - NODE_DIFF_WIDTH, e.Bounds.Height),
                     new StringFormat()
                     {
@@ -73,13 +81,22 @@ namespace WizTreeCompare
                 {
                     diffback = new LinearGradientBrush(new Point(0, 0), new Point(0, e.Bounds.Height), Color.FromArgb(235, 235, 245), Color.White);
                     diffpos = new LinearGradientBrush(new Point(0, 0), new Point(0, e.Bounds.Height), Color.White, Color.FromArgb(200, 200, 255));
-                    diffneg = new LinearGradientBrush(new Point(0, 0), new Point(0, e.Bounds.Height), Color.White, Color.FromArgb(200, 200, 255));
+                    diffneg = new LinearGradientBrush(new Point(0, 0), new Point(0, e.Bounds.Height), Color.White, Color.FromArgb(255, 200, 200));
                 }
 
                 var diffrect = new Rectangle(e.Bounds.Right - NODE_DIFF_WIDTH, e.Bounds.Y, NODE_DIFF_WIDTH, e.Bounds.Height);
                 diffrect.Inflate(-10, -2);
-                //e.Graphics.FillRectangle(SystemBrushes.ControlDark, diffrect);
                 e.Graphics.FillRectangle(diffback, diffrect);
+
+                int midwidth = (int)Math.Round(diffrect.Width / 2f);
+                int middle = diffrect.Left + midwidth;
+                float value = (int)Math.Abs(midwidth * influence);
+                var diffvalrect = new Rectangle(influence > 0 ? middle : (int)(middle - value), diffrect.Y, (int)value, diffrect.Height);
+                e.Graphics.FillRectangle(influence > 0 ? diffpos : (influence < 0 ? diffneg : Brushes.Transparent), diffvalrect);
+
+                float valueline = influence > 0 ? diffvalrect.Right : diffvalrect.Left;
+                e.Graphics.DrawLine(linecolor, middle, diffrect.Top, middle, diffrect.Bottom); //Center line
+                e.Graphics.DrawLine(linecolor, valueline, diffrect.Top, valueline, diffrect.Bottom); //Value line
                 e.Graphics.DrawRectangle(SystemPens.ActiveBorder, diffrect);
             }
         }
@@ -94,6 +111,8 @@ namespace WizTreeCompare
             if (!tvstruct.TryGetValue(path, out dir))
                 return; //TODO: Inform user?
 
+            long maxmag = dir.Max(x => Math.Abs(x.Value));
+
             List<TreeNode> nodes = new List<TreeNode>();
             foreach (var kv in dir)
             {
@@ -101,7 +120,7 @@ namespace WizTreeCompare
                 {
                     Name = kv.Key,
                     Text = kv.Key,
-                    Tag = kv.Value
+                    Tag = new NodeTag() { Size = kv.Value, Influence = maxmag > 0 ? (float)kv.Value / (float)maxmag : (float)Math.Sign(kv.Value) }
                 };
 
                 if (dirchars.Any(x => tvstruct.ContainsKey(path + x + kv.Key)) || path == "")
@@ -109,7 +128,13 @@ namespace WizTreeCompare
 
                 nodes.Add(tn);
             }
-            col.AddRange(nodes.OrderBy(x => (long)x.Tag).ToArray()); //TODO: Add option for val vs mag
+
+            int parentsign = Math.Sign(dir.Sum(x => x.Value));
+            col.AddRange(
+                nodes
+                .OrderByDescending(x => Math.Sign(((NodeTag)x.Tag).Size) * parentsign)
+                .ThenByDescending(x => Math.Abs(((NodeTag)x.Tag).Size))
+                .ToArray()); //TODO: Add option for val vs mag
         }
 
         private void menuOpen_Click(object sender, EventArgs e)
@@ -205,6 +230,7 @@ namespace WizTreeCompare
         internal class NodeTag
         {
             internal long Size;
+            internal float Influence = 0f;
         }
 
         CancellationTokenSource tokenSource = new CancellationTokenSource();

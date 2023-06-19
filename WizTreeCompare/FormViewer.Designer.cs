@@ -88,10 +88,11 @@
             // lblStatus
             // 
             lblStatus.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
-            lblStatus.BackColor = Color.MediumTurquoise;
-            lblStatus.Location = new Point(0, 0);
+            lblStatus.BackColor = SystemColors.Highlight;
+            lblStatus.ForeColor = SystemColors.HighlightText;
+            lblStatus.Location = new Point(1, 1);
             lblStatus.Name = "lblStatus";
-            lblStatus.Size = new Size(533, 24);
+            lblStatus.Size = new Size(531, 29);
             lblStatus.TabIndex = 2;
             lblStatus.Text = "Loading 0%";
             lblStatus.TextAlign = ContentAlignment.MiddleCenter;

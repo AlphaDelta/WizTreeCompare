@@ -73,6 +73,12 @@ namespace WizTreeCompare
         internal string lastsavepath = null;
         private void btnCompare_Click(object sender, EventArgs e)
         {
+            if (String.IsNullOrWhiteSpace(txtPast.Text) || String.IsNullOrWhiteSpace(txtFuture.Text))
+            {
+                MessageBox.Show(this, "Both a past and future csv is required", "Warning", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+
             if (!tcompare.IsCompleted)
             {
                 tokenSource.Cancel();
