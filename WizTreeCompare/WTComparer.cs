@@ -24,6 +24,8 @@ namespace WizTreeCompare
             IncludeDirectories = false
         ;
 
+        public StreamWriter Stream = StreamWriter.Null;
+
         public CancellationToken CancellationToken;
         public WTComparer(string pastpath, string futurepath, bool console = false)
         {
@@ -128,7 +130,9 @@ namespace WizTreeCompare
             long addbyte = 0, subbyte = 0;
             int diradditions = 0, dirmodifications = 0, dirdeletions = 0, dirnochange = 0;
             long diraddbyte = 0, dirsubbyte = 0;
-            using (var writer = Dry ? StreamWriter.Null : new StreamWriter(outputpath, false, Encoding.UTF8))
+
+            //using () //Todo: fix this
+            using (var writer = Stream != StreamWriter.Null ? Stream : new StreamWriter(outputpath, false, Encoding.UTF8))
             using (var csvoutput = new CsvWriter(writer, new CsvHelper.Configuration.CsvConfiguration(System.Globalization.CultureInfo.InvariantCulture)
             {
                 ShouldQuote = (e) => e.FieldType == typeof(string)

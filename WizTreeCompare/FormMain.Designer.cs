@@ -43,6 +43,7 @@
             chkIncludeNegatives = new CheckBox();
             btnViewer = new Button();
             btnClose = new Button();
+            chkViewer = new CheckBox();
             gbFiles.SuspendLayout();
             gbOptions.SuspendLayout();
             SuspendLayout();
@@ -124,7 +125,7 @@
             // btnCompare
             // 
             btnCompare.Anchor = AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
-            btnCompare.Location = new Point(12, 234);
+            btnCompare.Location = new Point(12, 257);
             btnCompare.Name = "btnCompare";
             btnCompare.Size = new Size(233, 43);
             btnCompare.TabIndex = 4;
@@ -136,12 +137,13 @@
             // 
             gbOptions.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
             gbOptions.Controls.Add(chkDry);
+            gbOptions.Controls.Add(chkViewer);
             gbOptions.Controls.Add(chkIncludeDirs);
             gbOptions.Controls.Add(chkIncludeUnchanged);
             gbOptions.Controls.Add(chkIncludeNegatives);
             gbOptions.Location = new Point(12, 102);
             gbOptions.Name = "gbOptions";
-            gbOptions.Size = new Size(460, 126);
+            gbOptions.Size = new Size(460, 149);
             gbOptions.TabIndex = 5;
             gbOptions.TabStop = false;
             gbOptions.Text = "Options";
@@ -159,7 +161,7 @@
             // chkIncludeDirs
             // 
             chkIncludeDirs.AutoSize = true;
-            chkIncludeDirs.Location = new Point(17, 97);
+            chkIncludeDirs.Location = new Point(17, 122);
             chkIncludeDirs.Name = "chkIncludeDirs";
             chkIncludeDirs.Size = new Size(283, 19);
             chkIncludeDirs.TabIndex = 0;
@@ -169,7 +171,7 @@
             // chkIncludeUnchanged
             // 
             chkIncludeUnchanged.AutoSize = true;
-            chkIncludeUnchanged.Location = new Point(17, 72);
+            chkIncludeUnchanged.Location = new Point(17, 97);
             chkIncludeUnchanged.Name = "chkIncludeUnchanged";
             chkIncludeUnchanged.Size = new Size(319, 19);
             chkIncludeUnchanged.TabIndex = 0;
@@ -180,7 +182,7 @@
             // 
             chkIncludeNegatives.AutoSize = true;
             chkIncludeNegatives.ForeColor = Color.Red;
-            chkIncludeNegatives.Location = new Point(17, 47);
+            chkIncludeNegatives.Location = new Point(17, 72);
             chkIncludeNegatives.Name = "chkIncludeNegatives";
             chkIncludeNegatives.Size = new Size(343, 19);
             chkIncludeNegatives.TabIndex = 0;
@@ -190,7 +192,7 @@
             // btnViewer
             // 
             btnViewer.Anchor = AnchorStyles.Bottom | AnchorStyles.Right;
-            btnViewer.Location = new Point(251, 234);
+            btnViewer.Location = new Point(251, 257);
             btnViewer.Name = "btnViewer";
             btnViewer.Size = new Size(108, 43);
             btnViewer.TabIndex = 6;
@@ -201,7 +203,7 @@
             // btnClose
             // 
             btnClose.Anchor = AnchorStyles.Bottom | AnchorStyles.Right;
-            btnClose.Location = new Point(365, 234);
+            btnClose.Location = new Point(365, 257);
             btnClose.Name = "btnClose";
             btnClose.Size = new Size(107, 43);
             btnClose.TabIndex = 6;
@@ -209,12 +211,22 @@
             btnClose.UseVisualStyleBackColor = true;
             btnClose.Click += btnClose_Click;
             // 
+            // chkViewer
+            // 
+            chkViewer.AutoSize = true;
+            chkViewer.Location = new Point(17, 47);
+            chkViewer.Name = "chkViewer";
+            chkViewer.Size = new Size(167, 19);
+            chkViewer.TabIndex = 0;
+            chkViewer.Text = "Open in viewer when done";
+            chkViewer.UseVisualStyleBackColor = true;
+            // 
             // FormMain
             // 
             AutoScaleDimensions = new SizeF(7F, 15F);
             AutoScaleMode = AutoScaleMode.Font;
             BackColor = SystemColors.Window;
-            ClientSize = new Size(484, 289);
+            ClientSize = new Size(484, 312);
             Controls.Add(btnClose);
             Controls.Add(btnViewer);
             Controls.Add(gbOptions);
@@ -248,5 +260,6 @@
         private CheckBox chkIncludeDirs;
         private Button btnViewer;
         private Button btnClose;
+        private CheckBox chkViewer;
     }
 }

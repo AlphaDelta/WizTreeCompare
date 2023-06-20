@@ -1,3 +1,5 @@
+using System.Text;
+
 namespace WizTreeCompare
 {
     public partial class FormMain : Form
@@ -20,7 +22,7 @@ namespace WizTreeCompare
             tipNegatives.SetToolTip(chkIncludeNegatives, "Not currently compatiable with WizTree");
 
 #if DEBUG
-            chkDry.Checked = true;
+            chkViewer.Checked = chkDry.Checked = true;
 #endif
         }
 
@@ -88,41 +90,67 @@ namespace WizTreeCompare
             string output = null;
             tcompare = new Task(() =>
             {
-                //Run comparison
-                WTComparer comparer = new WTComparer(txtPast.Text, txtFuture.Text)
+                WTComparer comparer = null;
+                Stream underlying = null;
+                try
                 {
-                    Dry = chkDry.Checked,
-                    IncludeNegatives = chkIncludeNegatives.Checked,
-                    IncludeUnchanged = chkIncludeUnchanged.Checked,
-                    IncludeDirectories = chkIncludeDirs.Checked,
-                    CancellationToken = tokenSource.Token
-                };
-                comparer.CompareAndSave(output);
-                if (!chkDry.Checked) lastsavepath = output;
+                    //Run comparison
+                    comparer = new WTComparer(txtPast.Text, txtFuture.Text)
+                    {
+                        Dry = chkDry.Checked,
+                        IncludeNegatives = chkIncludeNegatives.Checked,
+                        IncludeUnchanged = chkIncludeUnchanged.Checked,
+                        IncludeDirectories = chkIncludeDirs.Checked,
+                        CancellationToken = tokenSource.Token,
+                        Stream =
+                            chkDry.Checked
+                                ? (chkViewer.Checked ? new StreamWriter(underlying = new MemoryStream(), Encoding.UTF8, 4096, true) : StreamWriter.Null)
+                                : new StreamWriter(output, false, Encoding.UTF8)
+                    };
+                    comparer.CompareAndSave(output);
+                    if (!chkDry.Checked) lastsavepath = output;
 
-                //Restore compare button
-                this.Invoke(() =>
+                }
+                finally
                 {
-                    btnCompare.Text = "Compare...";
-                    btnCompare.Enabled = true;
-                    btnClose.Enabled = true;
+                    //Restore compare button
+                    this.Invoke(() =>
+                    {
+                        btnCompare.Text = "Compare...";
+                        btnCompare.Enabled = true;
+                        btnClose.Enabled = true;
 
-                    tokenSource.Dispose();
-                    tokenSource = new CancellationTokenSource();
-                });
+                        tokenSource.Dispose();
+                        tokenSource = new CancellationTokenSource();
+
+                        if (chkViewer.Checked && comparer != null)
+                        {
+                            if (chkDry.Checked)
+                            {
+                                underlying.Seek(0, SeekOrigin.Begin);
+                                new FormViewer(underlying).Show(); //Dispose will be called on close
+                            }
+                            else
+                                new FormViewer(output).Show(); //Dispose will be called on close
+                        }
+                    });
+                }
             });
 
             /* Save file dialog */
-            using (SaveFileDialog sfd = new SaveFileDialog())
-            {
-                sfd.FileName = $"WizTreeCompare_{DateTime.Now:yyyyMMddHHmmss}.csv";
-                sfd.Filter = "CSV File (*.csv)|*.csv";
+            if (chkDry.Checked)
+                output = "NUL";
+            else
+                using (SaveFileDialog sfd = new SaveFileDialog())
+                {
+                    sfd.FileName = $"WizTreeCompare_{DateTime.Now:yyyyMMddHHmmss}.csv";
+                    sfd.Filter = "CSV File (*.csv)|*.csv";
 
-                if (sfd.ShowDialog() != DialogResult.OK)
-                    return;
+                    if (sfd.ShowDialog() != DialogResult.OK)
+                        return;
 
-                output = sfd.FileName;
-            }
+                    output = sfd.FileName;
+                }
 
             /* Switch 'Compare' button to 'Cancel' */
             btnCompare.Enabled = false;
@@ -144,12 +172,12 @@ namespace WizTreeCompare
             if (viewer == null || viewer.IsDisposed)
             {
                 viewer = new FormViewer();
-                viewer.Show(this);
+                viewer.Show();
             }
             else if (viewer.Disposing)
                 return;
 
-            viewer.BringToFront();
+            viewer.Focus();
         }
 
         private void btnClose_Click(object sender, EventArgs e)
