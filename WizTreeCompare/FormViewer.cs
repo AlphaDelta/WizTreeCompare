@@ -123,6 +123,7 @@ namespace WizTreeCompare
                     /* If this is a directory row, and this is the first part, use a special node to keep track of its value */
                     rowisdir = false;
                     dir['^' + name] = diff;
+                    break;
                 }
                 else
                 {

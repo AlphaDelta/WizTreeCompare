@@ -114,17 +114,20 @@ namespace WizTreeCompare
 
             long sumpos = 0, sumneg = 0;
             foreach (var kv in dir)
-                if (kv.Value > 0)
-                    sumpos += kv.Value;
-                else if (kv.Value < 0)
-                    sumneg += -kv.Value;
+                if (!kv.Key.StartsWith('^'))
+                    if (kv.Value > 0)
+                        sumpos += kv.Value;
+                    else if (kv.Value < 0)
+                        sumneg += -kv.Value;
 
             long maxmag = (long)Math.Max(sumpos, sumneg);
 
             List<TreeNode> nodes = new List<TreeNode>();
             foreach (var kv in dir)
             {
-                bool isdir = dirchars.Any(x => tvstruct.ContainsKey(path + x + kv.Key)) || path == "";
+                if (kv.Key.StartsWith('^')) continue;
+                
+                bool isdir = (dirchars.Any(x => tvstruct.ContainsKey(path + x + kv.Key)) || path == "");
 
                 string imagekey =
                     kv.Key.EndsWith(":") || kv.Key.StartsWith(@"\\") || kv.Key.StartsWith(@"//")
@@ -181,13 +184,12 @@ namespace WizTreeCompare
         }
 
         int ignoreMouseMove = 0;
+        Point prevloc = new Point(-1, -1);
         private void TreeMain_MouseMove(object sender, MouseEventArgs e)
         {
-            if (ignoreMouseMove > 0)
-            {
-                ignoreMouseMove--;
+            if (e.Location == prevloc)
                 return;
-            }
+            prevloc = e.Location;
 
             TreeNode hover = treeMain.GetNodeAt(e.Location);
             if (hover == null) hover = treeMain.SelectedNode;
