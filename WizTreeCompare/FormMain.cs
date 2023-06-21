@@ -147,7 +147,10 @@ namespace WizTreeCompare
                     sfd.Filter = "CSV File (*.csv)|*.csv";
 
                     if (sfd.ShowDialog() != DialogResult.OK)
+                    {
+                        tcompare = Task.CompletedTask;
                         return;
+                    }
 
                     output = sfd.FileName;
                 }

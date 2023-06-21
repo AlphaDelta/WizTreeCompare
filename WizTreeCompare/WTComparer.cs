@@ -95,31 +95,31 @@ namespace WizTreeCompare
             if (CancellationToken.IsCancellationRequested) return; // <X>
             using (var progress = new ProgressContextConsole(tickrate, action))
             using (var sr = new StreamReader(PastPath, Encoding.UTF8))
+            using (var csv = new CsvReader(sr, System.Globalization.CultureInfo.InvariantCulture))
             {
+                csv.Read();
+                if (csv.Context.Parser.RawRecord.ToLower().TrimStart("\"'".ToCharArray()).StartsWith("generated"))
+                    csv.Read();
+                csv.ReadHeader();
+
                 progress.StartTime = DateTime.Now;
                 progress.ProgressTotal = sr.BaseStream.CanSeek ? sr.BaseStream.Length : -1;
                 progress.Action(progress);
 
-                if (sr.Peek() == 'G')
-                    sr.ReadLine();
-
-                using (var csv = new CsvReader(sr, System.Globalization.CultureInfo.InvariantCulture))
+                foreach (WTCsvRow row in csv.GetRecords<WTCsvRow>())
                 {
-                    foreach (WTCsvRow row in csv.GetRecords<WTCsvRow>())
-                    {
-                        if (CancellationToken.IsCancellationRequested) return; // <X>
+                    if (CancellationToken.IsCancellationRequested) return; // <X>
 
-                        /* Progress */
-                        nrow = csv.Context.Parser.Row;
-                        progress.ProgressCurrent = progress.ProgressTotal > 0 ? sr.BaseStream.Position : -1;
-                        progress.InvokeLater();
+                    /* Progress */
+                    nrow = csv.Context.Parser.Row;
+                    progress.ProgressCurrent = progress.ProgressTotal > 0 ? sr.BaseStream.Position : -1;
+                    progress.InvokeLater();
 
-                        /* Work */
-                        if (!IncludeDirectories && row.IsDirectory)
-                            continue; // It's a folder and we don't care
+                    /* Work */
+                    if (!IncludeDirectories && row.IsDirectory)
+                        continue; // It's a folder and we don't care
 
-                        pastrows[row.FileName] = row;
-                    }
+                    pastrows[row.FileName] = row;
                 }
             }
             LogToConsole($"Past dictionary populated with {pastrows.Count} entries", LogType.InfoImportant);
@@ -149,11 +149,13 @@ namespace WizTreeCompare
                     progress.Action(progress);
 
                     /* Work */
-                    if (sr.Peek() == 'G')
-                        sr.ReadLine();
-
                     using (var csv = new CsvReader(sr, System.Globalization.CultureInfo.InvariantCulture))
                     {
+                        csv.Read();
+                        if (csv.Context.Parser.RawRecord.ToLower().TrimStart("\"'".ToCharArray()).StartsWith("generated"))
+                            csv.Read();
+                        csv.ReadHeader();
+
                         var options = new TypeConverterOptions { Formats = new[] { "yyyy-MM-dd HH:mm:ss" } };
                         csvoutput.Context.TypeConverterOptionsCache.AddOptions<DateTime>(options);
                         csvoutput.Context.TypeConverterOptionsCache.AddOptions<DateTime?>(options);
