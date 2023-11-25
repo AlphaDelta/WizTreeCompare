@@ -23,7 +23,7 @@ namespace WizTreeCompare
 {
     public partial class FormViewer : Form
     {
-        //TODO: Support for directories
+        //TODO: Support for directories (Actually show them, include differences unaccounted for)
         //TODO: Option to view only positives/negatives
         //TODO: Text truncation
         //TODO: Filter
@@ -32,6 +32,7 @@ namespace WizTreeCompare
             InitializeComponent();
 
             SetupTreeView();
+            SetupSearch();
         }
 
         Stream _stream = null;
@@ -57,7 +58,14 @@ namespace WizTreeCompare
         {
             /* Semaphore */
             if (!tread.IsCompleted)
+            {
+                tokenSource.Cancel();
+
+                treeMain.Nodes.Clear();
+                tvstruct.Clear();
+
                 return;
+            }
 
             /* Get starting directory */
             string startdir = null;
@@ -158,6 +166,8 @@ namespace WizTreeCompare
             lblStatus.Text = "";
             lblStatus.Visible = true;
 
+            menuOpen.Text = "&Cancel";
+
             /* Read stream */
             tread = Task.Run(async () =>
             {
@@ -198,7 +208,6 @@ namespace WizTreeCompare
                     {
                         TreeDiscover("", treeMain.Nodes);
                         treeMain.Enabled = true;
-
                         lblStatus.Visible = false;
                     });
 
@@ -207,10 +216,18 @@ namespace WizTreeCompare
                 {
                     this.Invoke(() =>
                     {
+                        if (tokenSource.IsCancellationRequested)
+                        {
+                            lblStatus.Text = "Parsing was canceled by user";
+                            lblStatus.Visible = true;
+                        }
+
                         tokenSource.Dispose();
                         tokenSource = new CancellationTokenSource();
 
                         s.Dispose();
+
+                        menuOpen.Text = "&Open...";
                     });
                 }
             });

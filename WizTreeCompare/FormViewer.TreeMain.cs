@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Drawing.Drawing2D;
 using System.Drawing.Imaging;
+using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Runtime.InteropServices;
@@ -10,7 +11,7 @@ using System.Threading.Tasks;
 
 namespace WizTreeCompare
 {
-    public partial class FormViewer : Form
+    public partial class FormViewer
     {
         void SetupTreeView()
         {
@@ -112,6 +113,24 @@ namespace WizTreeCompare
             if (!tvstruct.TryGetValue(path, out dir))
                 throw new Exception("Node missing in tvstruct");
 
+            var nodes = GetNodes(path, dir);
+
+            int parentsign = Math.Sign(dir.Sum(x => x.Value));
+            col.AddRange(
+                nodes
+                .OrderByDescending(x => Math.Sign(((NodeTag)x.Tag).Size) * parentsign)
+                .ThenByDescending(x => Math.Abs(((NodeTag)x.Tag).Size))
+                .ToArray()); //TODO: Add option for val vs mag
+        }
+
+        private HashSet<string> _whitelist = null;
+        private void TreeSetFilter(HashSet<string> whitelist)
+        {
+            this._whitelist = whitelist;
+        }
+
+        private List<TreeNode> GetNodes(string path, Dictionary<string, long> dir)
+        {
             long sumpos = 0, sumneg = 0;
             foreach (var kv in dir)
                 if (!kv.Key.StartsWith('^'))
@@ -126,9 +145,9 @@ namespace WizTreeCompare
             foreach (var kv in dir)
             {
                 if (kv.Key.StartsWith('^')) continue;
-                
-                bool isdir = (dirchars.Any(x => tvstruct.ContainsKey(path + x + kv.Key)) || path == "");
+                if (_whitelist != null && !_whitelist.Contains(Path.Combine(path, kv.Key))) continue;
 
+                bool isdir = (dirchars.Any(x => tvstruct.ContainsKey(path + x + kv.Key)) || path == "");
                 string imagekey =
                     kv.Key.EndsWith(":") || kv.Key.StartsWith(@"\\") || kv.Key.StartsWith(@"//")
                     ? "device"
@@ -152,19 +171,14 @@ namespace WizTreeCompare
                 nodes.Add(tn);
             }
 
-            int parentsign = Math.Sign(dir.Sum(x => x.Value));
-            col.AddRange(
-                nodes
-                .OrderByDescending(x => Math.Sign(((NodeTag)x.Tag).Size) * parentsign)
-                .ThenByDescending(x => Math.Abs(((NodeTag)x.Tag).Size))
-                .ToArray()); //TODO: Add option for val vs mag
+            return nodes;
         }
 
         /* Events */
         volatile TreeNode nodelasthover = null;
         private void SetNodeLastHover(TreeNode n)
         {
-            if (nodelasthover == n)
+            if (nodelasthover == n || n == null)
                 return;
 
             TreeNode old = nodelasthover;
@@ -183,7 +197,6 @@ namespace WizTreeCompare
                 treeMain.Invalidate(updatearea);
         }
 
-        int ignoreMouseMove = 0;
         Point prevloc = new Point(-1, -1);
         private void TreeMain_MouseMove(object sender, MouseEventArgs e)
         {
@@ -199,7 +212,6 @@ namespace WizTreeCompare
 
         private void TreeMain_BeforeSelect(object sender, TreeViewCancelEventArgs e)
         {
-            ignoreMouseMove = 5;
             SetNodeLastHover(e.Node);
         }
 
@@ -210,7 +222,6 @@ namespace WizTreeCompare
 
         private void TreeMain_AfterExpand(object sender, TreeViewEventArgs e)
         {
-            ignoreMouseMove = 3;
             SetNodeLastHover(e.Node);
         }
 
