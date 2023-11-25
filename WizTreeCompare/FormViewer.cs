@@ -33,6 +33,12 @@ namespace WizTreeCompare
 
             SetupTreeView();
             SetupSearch();
+
+            this.FormClosed += (o, e) =>
+            {
+                tvstruct = null;
+                GC.Collect();
+            };
         }
 
         Stream _stream = null;

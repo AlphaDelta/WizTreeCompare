@@ -35,29 +35,14 @@ namespace WizTreeCompare
                 treeMain.Enabled = false;
                 treeMain.Nodes.Clear();
 
-                HashSet<string> paths = new(64);
-                foreach (var kv in tvstruct)
+                if (string.IsNullOrWhiteSpace(filter))
+                    TreeSetFilter(null);
+                else
                 {
-                    if (kv.Key.Contains(filter))
+                    HashSet<string> paths = new(64);
+                    foreach (var kv in tvstruct)
                     {
-                        /* Add entire chain to whitelist */
-                        string[] spl = kv.Key.Split(dirchars);
-                        string path = spl[0];
-                        paths.Add(path);
-                        for (int i = 1; i < spl.Length; i++)
-                        {
-                            path += dirchars[0] + spl[1];
-                            paths.Add(path);
-                        }
-
-                        /* Add children */
-                        foreach (string child in kv.Value.Keys)
-                            paths.Add(Path.Combine(kv.Key, child));
-                    }
-                    else
-                    {
-                        var fchildren = kv.Value.Keys.Where(x => x.Contains(filter));
-                        if (fchildren.Any())
+                        if (kv.Key.Contains(filter))
                         {
                             /* Add entire chain to whitelist */
                             string[] spl = kv.Key.Split(dirchars);
@@ -65,18 +50,38 @@ namespace WizTreeCompare
                             paths.Add(path);
                             for (int i = 1; i < spl.Length; i++)
                             {
-                                path += dirchars[0] + spl[i];
+                                path += dirchars[0] + spl[1];
                                 paths.Add(path);
                             }
 
                             /* Add children */
-                            foreach (string child in fchildren)
+                            foreach (string child in kv.Value.Keys)
                                 paths.Add(Path.Combine(kv.Key, child));
                         }
+                        else
+                        {
+                            var fchildren = kv.Value.Keys.Where(x => x.Contains(filter));
+                            if (fchildren.Any())
+                            {
+                                /* Add entire chain to whitelist */
+                                string[] spl = kv.Key.Split(dirchars);
+                                string path = spl[0];
+                                paths.Add(path);
+                                for (int i = 1; i < spl.Length; i++)
+                                {
+                                    path += dirchars[0] + spl[i];
+                                    paths.Add(path);
+                                }
+
+                                /* Add children */
+                                foreach (string child in fchildren)
+                                    paths.Add(Path.Combine(kv.Key, child));
+                            }
+                        }
                     }
+                    TreeSetFilter(paths);
                 }
 
-                TreeSetFilter(paths);
                 TreeDiscover("", treeMain.Nodes);
             }
             finally

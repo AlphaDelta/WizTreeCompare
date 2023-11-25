@@ -146,7 +146,7 @@ namespace WizTreeCompare
             {
                 if (kv.Key.StartsWith('^')) continue;
                 bool whitelisted = _whitelist != null && _whitelist.Contains(Path.Combine(path, kv.Key));
-                if (!whitelisted && _whitelist != null) continue;
+                //if (!whitelisted && _whitelist != null) continue;
 
                 bool isdir = (dirchars.Any(x => tvstruct.ContainsKey(path + x + kv.Key)) || path == "");
                 string imagekey =
