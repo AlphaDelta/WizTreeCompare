@@ -103,48 +103,35 @@ namespace WizTreeCompare
         private void UpdatePath(string path, long diff, bool rowisdir)
         {
             /* Prepare path */
-            if (path.Length > 0 && !dirchars.Contains(path[0])) path = dirchars[0] + path; //If it hasn't got a delimiter at the start, add one
+            //if (path.Length > 0 && !dirchars.Contains(path[0])) path = dirchars[0] + path; //If it hasn't got a delimiter at the start, add one
             ReadOnlySpan<char> spanpath = path.AsSpan().TrimEnd(dirchars);
             if (spanpath.Length < 1) return;
 
             /* Iterate parts */
-            string name = "", parent = "";
-            int i = spanpath.Length;
-            while (--i >= 0 && spanpath.Length > 0)
+            Span<Range> ranges = stackalloc Range[128];
+            int amt = spanpath.SplitAny(ranges, dirchars, StringSplitOptions.RemoveEmptyEntries);
+            while (amt-- > 0)
             {
-                /* Skip character if it didn't denote a directory */
-                if (!dirchars.Contains(spanpath[i])) continue;
+                string spath = amt > 0 ? spanpath[..(ranges[amt].Start.Value - 1)].ToString() : "";
+                string snode = spanpath[ranges[amt]].ToString();
 
-                /* Get parts of path */
-                char separator = spanpath[i];
-                name = spanpath[(i + 1)..].ToString();
-                spanpath = spanpath[..i].TrimEnd(dirchars); //Reduce spanpath to i, trim ending delimiter
-                if (spanpath.Length > 0)
-                    parent = spanpath[1..].ToString(); //Cull the 
-                else
-                {
-                    name = new string(separator, i) + name;
-                    parent = "";
-                }
-
-                /* Update node */
                 Dictionary<string, long> dir;
-                if (!tvstruct.TryGetValue(parent, out dir))
-                    dir = tvstruct[parent] = new Dictionary<string, long>(); //Create directory if it doesn't already exist
+                if (!tvstruct.TryGetValue(spath, out dir))
+                    dir = tvstruct[spath] = new Dictionary<string, long>(); //Create directory if it doesn't already exist
 
                 if (rowisdir)
                 {
                     /* If this is a directory row, and this is the first part, use a special node to keep track of its value */
                     rowisdir = false;
-                    dir['^' + name] = diff;
+                    dir['^' + snode] = diff;
                     break;
                 }
                 else
                 {
-                    if (dir.ContainsKey(name))
-                        dir[name] += diff;
+                    if (dir.ContainsKey(snode))
+                        dir[snode] += diff;
                     else
-                        dir[name] = diff;
+                        dir[snode] = diff;
                 }
             }
         }
@@ -166,6 +153,7 @@ namespace WizTreeCompare
 
             treeMain.Nodes.Clear();
             tvstruct.Clear();
+            GC.Collect();
 
             treeMain.Enabled = false;
 

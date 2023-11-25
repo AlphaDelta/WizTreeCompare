@@ -295,7 +295,7 @@ namespace WizTreeCompare
                 g.DrawString(
                     WTComparer.BytesToString(diff),
                     e.Node.TreeView.Font,
-                    e.Node.ForeColor != Color.Black ? new SolidBrush(e.Node.ForeColor) : (diff > 0 ? difftextpos : (diff < 0 ? difftextneg : difftextnone)),
+                    diff > 0 ? difftextpos : (diff < 0 ? difftextneg : difftextnone),
                     new Rectangle(0, 0, 100, bmp.Height),
                     new StringFormat()
                     {
