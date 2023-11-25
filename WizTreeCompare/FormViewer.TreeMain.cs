@@ -145,7 +145,8 @@ namespace WizTreeCompare
             foreach (var kv in dir)
             {
                 if (kv.Key.StartsWith('^')) continue;
-                if (_whitelist != null && !_whitelist.Contains(Path.Combine(path, kv.Key))) continue;
+                bool whitelisted = _whitelist != null && _whitelist.Contains(Path.Combine(path, kv.Key));
+                if (!whitelisted && _whitelist != null) continue;
 
                 bool isdir = (dirchars.Any(x => tvstruct.ContainsKey(path + x + kv.Key)) || path == "");
                 string imagekey =
@@ -162,7 +163,9 @@ namespace WizTreeCompare
                     Text = kv.Key,
                     Tag = new NodeTag() { Size = kv.Value, Influence = maxmag > 0 ? (float)kv.Value / (float)maxmag : (float)Math.Sign(kv.Value) },
                     ImageKey = imagekey,
-                    SelectedImageKey = imagekey
+                    SelectedImageKey = imagekey,
+
+                    ForeColor = whitelisted ? Color.OrangeRed : Color.Black,
                 };
 
                 if (isdir)
@@ -291,7 +294,8 @@ namespace WizTreeCompare
                 /* Text */
                 g.DrawString(
                     WTComparer.BytesToString(diff),
-                    e.Node.TreeView.Font, (diff > 0 ? difftextpos : (diff < 0 ? difftextneg : difftextnone)),
+                    e.Node.TreeView.Font,
+                    e.Node.ForeColor != Color.Black ? new SolidBrush(e.Node.ForeColor) : (diff > 0 ? difftextpos : (diff < 0 ? difftextneg : difftextnone)),
                     new Rectangle(0, 0, 100, bmp.Height),
                     new StringFormat()
                     {
