@@ -24,7 +24,7 @@
                 Console.Write($" ");
                 Console.ForegroundColor = ConsoleColor.Black;
                 Console.BackgroundColor = ConsoleColor.Gray;
-                Console.WriteLine($" v{typeof(FormMain).Assembly.GetName().Version.ToString(3)}-RC.2 ");
+                Console.WriteLine($" v{typeof(FormMain).Assembly.GetName().Version.ToString(3)}-RC.3 ");
                 Console.ForegroundColor = prevfg;
                 Console.BackgroundColor = prevbg;
                 Console.WriteLine();
