@@ -237,6 +237,7 @@ namespace WizTreeCompare
                                     else
                                         dirmodifications++;
 
+                                    //TODO: This is broken - A directory contains the size of its child directories as well
                                     if (newrow.Size > 0)
                                         diraddbyte += newrow.Size;
                                     else
