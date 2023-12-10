@@ -173,7 +173,7 @@ namespace WizTreeCompare
                     using (var csv = new CsvReader(sr, System.Globalization.CultureInfo.InvariantCulture))
                     {
                         csv.Read();
-                        if (csv.Context.Parser.RawRecord.ToLower().TrimStart("\"'".ToCharArray()).StartsWith("generated"))
+                        if (WTCsvRow.IsRowJunk(csv.Context.Parser.RawRecord.ToLower()))
                             csv.Read();
                         csv.ReadHeader();
 

@@ -1,4 +1,5 @@
 ﻿using CsvHelper;
+using CsvHelper.Configuration;
 using CsvHelper.TypeConversion;
 using System;
 using System.Collections.Generic;
@@ -90,6 +91,7 @@ namespace WizTreeCompare
 
 
             /* PAST CSV */
+            string[] header = null;
             LogToConsole("Reading past CSV and populating dictionary...");
             Dictionary<string, WTCsvRow> pastrows = new Dictionary<string, WTCsvRow>();
             if (CancellationToken.IsCancellationRequested) return; // <X>
@@ -98,9 +100,11 @@ namespace WizTreeCompare
             using (var csv = new CsvReader(sr, System.Globalization.CultureInfo.InvariantCulture))
             {
                 csv.Read();
-                if (csv.Context.Parser.RawRecord.ToLower().TrimStart("\"'".ToCharArray()).StartsWith("generated"))
+                if (WTCsvRow.IsRowJunk(csv.Context.Parser.RawRecord.ToLower()))
                     csv.Read();
+
                 csv.ReadHeader();
+                header = csv.HeaderRecord;
 
                 progress.StartTime = DateTime.Now;
                 progress.ProgressTotal = sr.BaseStream.CanSeek ? sr.BaseStream.Length : -1;
@@ -135,7 +139,7 @@ namespace WizTreeCompare
             using (var writer = Stream != StreamWriter.Null ? Stream : new StreamWriter(outputpath, false, Encoding.UTF8))
             using (var csvoutput = new CsvWriter(writer, new CsvHelper.Configuration.CsvConfiguration(System.Globalization.CultureInfo.InvariantCulture)
             {
-                ShouldQuote = (e) => e.FieldType == typeof(string)
+                ShouldQuote = (e) => e.FieldType == typeof(string),
             }))
             {
                 HashSet<string> seen = new HashSet<string>(pastrows.Count);
@@ -152,7 +156,7 @@ namespace WizTreeCompare
                     using (var csv = new CsvReader(sr, System.Globalization.CultureInfo.InvariantCulture))
                     {
                         csv.Read();
-                        if (csv.Context.Parser.RawRecord.ToLower().TrimStart("\"'".ToCharArray()).StartsWith("generated"))
+                        if (WTCsvRow.IsRowJunk(csv.Context.Parser.RawRecord.ToLower()))
                             csv.Read();
                         csv.ReadHeader();
 
@@ -160,7 +164,10 @@ namespace WizTreeCompare
                         csvoutput.Context.TypeConverterOptionsCache.AddOptions<DateTime>(options);
                         csvoutput.Context.TypeConverterOptionsCache.AddOptions<DateTime?>(options);
 
-                        csvoutput.WriteHeader<WTCsvRow>();
+                        //csvoutput.WriteHeader<WTCsvRow>();
+                        foreach (string h in header[..WTCsvRow.HEADER_SIZE])
+                            csvoutput.WriteField(h);
+
                         foreach (WTCsvRow futurerow in csv.GetRecords<WTCsvRow>())
                         {
                             if (CancellationToken.IsCancellationRequested) return; // <X>

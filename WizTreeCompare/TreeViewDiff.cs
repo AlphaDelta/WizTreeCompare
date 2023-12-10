@@ -125,7 +125,7 @@ namespace WizTreeCompare
                 this.Update();
             }
             else
-                this.Invalidate(); //TODO: Better invalidate
+                this.Refresh(); //TODO: Better invalidate
         }
 
         Point prevloc = new Point(-1, -1);
