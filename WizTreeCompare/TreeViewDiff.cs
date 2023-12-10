@@ -117,15 +117,27 @@ namespace WizTreeCompare
 
             nodelasthover = n;
 
-            if (old != null && n.Parent == old.Parent)
+            int width = NODE_TEXT_WIDTH + NODE_DIFF_WIDTH;
+
+            if (old != null)
             {
-                //TODO: Invalidate open items
-                this.Invalidate(new Rectangle(old.Bounds.X + NODE_PAINT_LEFT, old.Bounds.Y, NODE_TEXT_WIDTH + NODE_DIFF_WIDTH, old.Bounds.Height));
-                this.Invalidate(new Rectangle(old.Bounds.X + NODE_PAINT_LEFT, n.Bounds.Y, NODE_TEXT_WIDTH + NODE_DIFF_WIDTH, n.Bounds.Height));
-                this.Update();
+                if (old.Parent != null && old.Parent != n.Parent)
+                    old = old.Parent;
+
+                int oldcount = old.Nodes.Count;
+                if (old.IsExpanded && oldcount > 0)
+                    this.Invalidate(new Rectangle(old.Bounds.X + NODE_PAINT_LEFT, old.Bounds.Y, this.Width, old.LastNode.Bounds.Y - old.Bounds.Y + old.LastNode.Bounds.Height));
+                else
+                    this.Invalidate(new Rectangle(old.Bounds.X + NODE_PAINT_LEFT, old.Bounds.Y, width, old.Bounds.Height));
             }
+
+            int newcount = n.Nodes.Count;
+            if (n.IsExpanded && newcount > 0)
+                this.Invalidate(new Rectangle(n.Bounds.X + NODE_PAINT_LEFT, n.Bounds.Y, this.Width, n.LastNode.Bounds.Y - n.Bounds.Y + n.LastNode.Bounds.Height));
             else
-                this.Refresh(); //TODO: Better invalidate
+                this.Invalidate(new Rectangle(n.Bounds.X + NODE_PAINT_LEFT, n.Bounds.Y, width, n.Bounds.Height));
+
+            this.Update();
         }
 
         Point prevloc = new Point(-1, -1);
@@ -158,9 +170,9 @@ namespace WizTreeCompare
         const int NODE_PAINT_LEFT = 200;
         const int NODE_INDENT_LEFT = 25;
         LinearGradientBrush diffback = null, diffpos = null, diffneg = null, diffbackinactive = null, diffposinactive = null, diffneginactive = null;
-        SolidBrush difftextpos = new SolidBrush(Color.FromArgb(0, 0, 150));
-        SolidBrush difftextneg = new SolidBrush(Color.FromArgb(150, 0, 0));
-        SolidBrush difftextnone = new SolidBrush(Color.FromArgb(18, 10, 26));
+        Color difftextpos = Color.FromArgb(0, 0, 150);
+        Color difftextneg = Color.FromArgb(150, 0, 0);
+        Color difftextnone = Color.FromArgb(18, 10, 26);
         Pen linecolor = new Pen(Color.FromArgb(80, SystemColors.ActiveBorder));
         Pen linecolorvalue = new Pen(Color.FromArgb(80, SystemColors.ActiveBorder));
         Pen sparklepen = new Pen(Color.FromArgb(120, Color.White));
@@ -187,7 +199,7 @@ namespace WizTreeCompare
             using (Bitmap bmp = new Bitmap(bounds.Width, bounds.Height))
             using (Graphics g = Graphics.FromImage(bmp))
             {
-                g.Clear(SystemColors.Window);
+                g.Clear(Color.Transparent);
 
                 long diff = ((NodeTag)e.Node.Tag).Size;
                 float influence = ((NodeTag)e.Node.Tag).Influence;
@@ -220,15 +232,21 @@ namespace WizTreeCompare
                 }
 
                 /* Text */
-                g.DrawString(
-                    WTComparer.BytesToString(diff),
-                    e.Node.TreeView.Font,
-                    diff > 0 ? difftextpos : (diff < 0 ? difftextneg : difftextnone),
+                //g.DrawString(
+                //    WTComparer.BytesToString(diff),
+                //    e.Node.TreeView.Font,
+                //    diff > 0 ? difftextpos : (diff < 0 ? difftextneg : difftextnone),
+                //    new Rectangle(0, 0, NODE_TEXT_WIDTH, bmp.Height),
+                //    new StringFormat()
+                //    {
+                //        Alignment = StringAlignment.Far
+                //    });
+                TextRenderer.DrawText(g, WTComparer.BytesToString(diff), e.Node.TreeView.Font,
                     new Rectangle(0, 0, NODE_TEXT_WIDTH, bmp.Height),
-                    new StringFormat()
-                    {
-                        Alignment = StringAlignment.Far
-                    });
+                    diff > 0 ? difftextpos : (diff < 0 ? difftextneg : difftextnone),
+                    SystemColors.Window,
+                    TextFormatFlags.VerticalCenter | TextFormatFlags.Right | TextFormatFlags.SingleLine | TextFormatFlags.LeftAndRightPadding
+                );
 
                 /* Diff rect */
                 var diffrect = new Rectangle(0 + NODE_TEXT_WIDTH, 0, NODE_DIFF_WIDTH, e.Bounds.Height);
@@ -273,23 +291,10 @@ namespace WizTreeCompare
                         if (p == nodelasthover)
                             opacityMatrix = attribParentFocus;
 
+                e.Graphics.CompositingMode = CompositingMode.SourceOver;
+                e.Graphics.CompositingQuality = CompositingQuality.HighSpeed;
                 e.Graphics.DrawImage(bmp, bounds, 0, 0, bmp.Width, bmp.Height, GraphicsUnit.Pixel, opacityMatrix);
             }
-
-
-
-            //Blend system drawing on top
-            //bounds = new Rectangle(e.Bounds.Top, e.Bounds.Left, leftindent, e.Bounds.Height);
-            //using (Bitmap bmp = new Bitmap(bounds.Width, bounds.Height))
-            //using (Graphics g = Graphics.FromImage(bmp))
-            //{
-            //    base.OnDrawNode(new DrawTreeNodeEventArgs(g, e.Node, bounds, e.State)
-            //    {
-            //        DrawDefault = true,
-            //    });
-
-            //    e.Graphics.DrawImage(bmp, bounds, 0, 0, bmp.Width, bmp.Height, GraphicsUnit.Pixel);
-            //}
         }
     }
 }

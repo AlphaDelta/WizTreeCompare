@@ -181,9 +181,11 @@ namespace WizTreeCompare
                         progress.ProgressTotal = sr.BaseStream.Length;
                         progress.Action(progress);
 
-                        var records = csv.GetRecordsAsync<WTCsvRow>(tokenSource.Token); // <x>
-                        await foreach (WTCsvRow row in records)
+                        var records = csv.GetRecords<WTCsvRow>();
+                        foreach (WTCsvRow row in records)
                         {
+                            if (tokenSource.Token.IsCancellationRequested) break;
+
                             progress.ProgressCurrent = progress.ProgressTotal > 0 ? sr.BaseStream.Position : -1;
                             progress.InvokeLater();
 
