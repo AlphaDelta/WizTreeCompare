@@ -33,7 +33,7 @@
             menuSearch = new ToolStripTextBox();
             split = new SplitContainer();
             lblStatus = new Label();
-            treeMain = new TreeView();
+            treeMain = new TreeViewDiff();
             treeAnc = new TreeView();
             menu.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)split).BeginInit();

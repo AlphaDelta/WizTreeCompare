@@ -136,12 +136,6 @@ namespace WizTreeCompare
             }
         }
 
-        internal class NodeTag
-        {
-            internal long Size;
-            internal float Influence = 0f;
-        }
-
         CancellationTokenSource tokenSource = new CancellationTokenSource();
         Task tread = Task.CompletedTask;
         Dictionary<string, Dictionary<string, long>> tvstruct = new Dictionary<string, Dictionary<string, long>>();
