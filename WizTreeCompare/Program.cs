@@ -1,4 +1,6 @@
-﻿namespace WizTreeCompare
+﻿using System.Diagnostics;
+
+namespace WizTreeCompare
 {
     internal static class Program
     {
@@ -24,7 +26,7 @@
                 Console.Write($" ");
                 Console.ForegroundColor = ConsoleColor.Black;
                 Console.BackgroundColor = ConsoleColor.Gray;
-                Console.WriteLine($" v{typeof(FormMain).Assembly.GetName().Version.ToString(3)}-RC.3 ");
+                Console.WriteLine($" v{typeof(FormMain).Assembly.GetName().Version.ToString(3)}-RC.4 ");
                 Console.ForegroundColor = prevfg;
                 Console.BackgroundColor = prevbg;
                 Console.WriteLine();
@@ -32,8 +34,10 @@
 
             if (args.Length < 1)
             {
+                nint MAIN_WINDOW = Process.GetCurrentProcess().MainWindowHandle;
+
                 ApplicationConfiguration.Initialize();
-                Application.Run(new FormMain());
+                Application.Run(new FormMain(MAIN_WINDOW));
             }
             else if (args.Length == 3)
             {

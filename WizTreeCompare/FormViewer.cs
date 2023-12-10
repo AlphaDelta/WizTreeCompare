@@ -25,8 +25,6 @@ namespace WizTreeCompare
     {
         //TODO: Support for directories (Actually show them, include differences unaccounted for)
         //TODO: Option to view only positives/negatives
-        //TODO: Text truncation
-        //TODO: Filter
         public FormViewer()
         {
             InitializeComponent();

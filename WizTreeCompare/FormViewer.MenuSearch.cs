@@ -30,6 +30,7 @@ namespace WizTreeCompare
 
         private void ApplyFilter(string filter)
         {
+            //TODO: Something less stupid than this
             try
             {
                 treeMain.Enabled = false;

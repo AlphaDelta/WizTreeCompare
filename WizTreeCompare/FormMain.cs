@@ -1,12 +1,48 @@
+using System.Diagnostics;
 using System.Text;
 
 namespace WizTreeCompare
 {
     public partial class FormMain : Form
     {
-        public FormMain()
+        [System.Runtime.InteropServices.DllImport("user32.dll", SetLastError = true)]
+        static extern bool SetWindowPos(nint hWnd, nint hWndInsertAfter, int X, int Y, int cx, int cy, SWP uFlags);
+
+        /// <summary>
+        /// SetWindowPos Flags
+        /// </summary>
+        public enum SWP : int
         {
+            NOSIZE = 0x0001,
+            NOMOVE = 0x0002,
+            NOZORDER = 0x0004,
+            NOREDRAW = 0x0008,
+            NOACTIVATE = 0x0010,
+            DRAWFRAME = 0x0020,
+            FRAMECHANGED = 0x0020,
+            SHOWWINDOW = 0x0040,
+            HIDEWINDOW = 0x0080,
+            NOCOPYBITS = 0x0100,
+            NOOWNERZORDER = 0x0200,
+            NOREPOSITION = 0x0200,
+            NOSENDCHANGING = 0x0400,
+            DEFERERASE = 0x2000,
+            ASYNCWINDOWPOS = 0x4000
+        }
+
+        nint MAIN_WINDOW;
+        public FormMain(nint hwind)
+        {
+            this.MAIN_WINDOW = hwind;
             InitializeComponent();
+
+            if (MAIN_WINDOW > 0)
+                this.Activated += (o, e) =>
+                {
+                    if (this.Handle != MAIN_WINDOW)
+                        SetWindowPos(MAIN_WINDOW, this.Handle, 0, 0, 0, 0, SWP.NOSIZE | SWP.NOMOVE | SWP.NOACTIVATE | SWP.NOREPOSITION);
+
+                };
 
             txtPast.AllowDrop = true;
             txtFuture.AllowDrop = true;

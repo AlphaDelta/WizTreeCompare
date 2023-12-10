@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Frozen;
 using System.Collections.Generic;
 using System.Drawing.Drawing2D;
 using System.Drawing.Imaging;
@@ -44,10 +45,10 @@ namespace WizTreeCompare
                 .ToArray()); //TODO: Add option for val vs mag
         }
 
-        private HashSet<string> _whitelist = null;
+        private FrozenSet<string> _whitelist = null;
         private void TreeSetFilter(HashSet<string> whitelist)
         {
-            this._whitelist = whitelist;
+            this._whitelist = whitelist.ToFrozenSet();
         }
 
         private List<TreeNode> GetNodes(string path, Dictionary<string, long> dir)
@@ -86,7 +87,7 @@ namespace WizTreeCompare
                     ImageKey = imagekey,
                     SelectedImageKey = imagekey,
 
-                    ForeColor = whitelisted ? Color.OrangeRed : Color.Black,
+                    ForeColor = whitelisted ? Color.OrangeRed : SystemColors.ControlText,
                 };
 
                 if (isdir)

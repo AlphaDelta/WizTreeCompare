@@ -119,21 +119,38 @@ namespace WizTreeCompare
 
             int width = NODE_TEXT_WIDTH + NODE_DIFF_WIDTH;
 
+            TreeNode lowerbound;
             if (old != null)
             {
-                if (old.Parent != null && old.Parent != n.Parent)
-                    old = old.Parent;
+                if (old.Parent != n.Parent)
+                    old = (old.Level < n.Level ? old.Parent : n.Parent) ?? old;
 
-                int oldcount = old.Nodes.Count;
-                if (old.IsExpanded && oldcount > 0)
-                    this.Invalidate(new Rectangle(old.Bounds.X + NODE_PAINT_LEFT, old.Bounds.Y, this.Width, old.LastNode.Bounds.Y - old.Bounds.Y + old.LastNode.Bounds.Height));
+                lowerbound = old.NextNode;
+
+                if (old.IsExpanded)
+                {
+                    if (lowerbound != null)
+                        this.Invalidate(new Rectangle(old.Bounds.X + NODE_PAINT_LEFT, old.Bounds.Y, this.Width, lowerbound.Bounds.Y - old.Bounds.Y));
+                    else if(old.Parent != n.Parent)
+                        this.Invalidate();
+                    else
+                        this.Invalidate(new Rectangle(old.Bounds.X + NODE_PAINT_LEFT, old.Bounds.Y, width, old.Bounds.Height));
+                }
                 else
                     this.Invalidate(new Rectangle(old.Bounds.X + NODE_PAINT_LEFT, old.Bounds.Y, width, old.Bounds.Height));
             }
 
-            int newcount = n.Nodes.Count;
-            if (n.IsExpanded && newcount > 0)
-                this.Invalidate(new Rectangle(n.Bounds.X + NODE_PAINT_LEFT, n.Bounds.Y, this.Width, n.LastNode.Bounds.Y - n.Bounds.Y + n.LastNode.Bounds.Height));
+            if (n.IsExpanded)
+            {
+                lowerbound = n.NextNode;
+
+                if (lowerbound != null)
+                    this.Invalidate(new Rectangle(n.Bounds.X + NODE_PAINT_LEFT, n.Bounds.Y, this.Width, lowerbound.Bounds.Y - n.Bounds.Y));
+                else if(old.Parent != n.Parent)
+                    this.Invalidate();
+                else
+                    this.Invalidate(new Rectangle(n.Bounds.X + NODE_PAINT_LEFT, n.Bounds.Y, width, n.Bounds.Height));
+            }
             else
                 this.Invalidate(new Rectangle(n.Bounds.X + NODE_PAINT_LEFT, n.Bounds.Y, width, n.Bounds.Height));
 
